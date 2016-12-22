@@ -1,0 +1,93 @@
+#!/bin/sh
+
+DC='dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 1)',dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 2)
+
+if [ $(basename $0) == 'add_domain' ]; then
+echo -n "Domain ?"
+read DOMAIN
+echo -n "Password ?"
+read PASSWORD
+
+cat > /tmp/domain.ldif <<EOF
+dn:dc=$DOMAIN,dc=mail,$DC
+o: $(echo $DOMAIN | sed -r 's/(.*)\.(.*)/\1\2/')
+dc: $DOMAIN
+description: virtualDomain
+userPassword: $(slappasswd -s $PASSWORD -h {SSHA})
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+
+dn:dc=mailAccount,dc=$DOMAIN,dc=mail,$DC
+dc: mailAccount
+o: mailAccount
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+
+dn:dc=mailAlias,dc=$DOMAIN,dc=mail,$DC
+dc: mailAlias
+o: mailAlias
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+EOF
+ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /tmp/domain.ldif
+fi
+
+if [ $(basename $0) == 'add_alias' ]; then
+echo -n 'Domain ?'
+read DOMAIN
+echo -n 'User ?'
+read USER
+echo -n 'Name ?'
+read NAME
+echo -n 'Liste des destinataires ? CTRL+D pour terminer'
+while read DEST; do
+	USERS="$USERS,$DEST"
+done
+
+USER=$(echo $USER | tr 'a-z' 'A-Z')
+cat > '/tmp/alias.ldif' <<EOF
+dn:mail=$USER@$DOMAIN,dc=mailAlias,dc=$LDAP_DOMAIN_BASE,dc=mail,$DC
+cn:$USER@$DOMAIN
+mail:$USER@$DOMAIN
+maildrop:$USERS
+sn: $NAME
+displayName: $NAME
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: CourierMailAlias
+EOF
+ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f '/tmp/alias.ldif'
+
+fi
+
+if [ $(basename $0) == 'add_account' ]; then
+echo -n "Domain ?"
+read DOMAIN
+echo -n "User ?"
+read USER
+echo -n "UID ?"
+read UID
+echo -n "Password ?"
+read PASSWORD
+
+USER=$(echo $USER | tr 'a-z' 'A-Z')
+if [ $(ldapsearch -h ldap -b "ou=people,$DC" -D "cn=admin,$DC" -w "$LDAP_PASSWORD" -P 3 -LLL "(mail=$USER)" uid | wc -b ) -eq 0 ] mail
+
+cat > '/tmp/alias.ldif' <<EOF
+dn:mail=$USER@$DOMAIN,dc=mailaccount,dc=$domain,dc=mail,$dc
+cn:$USER@$DOMAIN
+mail:$USER@$DOMAIN
+mailbox: $DOMAIN/$USER/
+homeDirectory: /vmail/
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: CourierMailAccount
+userPassword: $(slappasswd -s $PASSWORD -h {SSHA})
+
+EOF
+ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /tmp/domain.ldif
+fi
+

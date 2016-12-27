@@ -1,7 +1,7 @@
 FROM debian:8.2
-MAINTAINER Speed03 <infinity.speed03@gmail.com>
+MAINTAINER Speed03 <speed@infinity.ovh>
 
-RUN apt-get update&&apt-get upgrade -y
+RUN apt-get update && apt-get upgrade -y
 RUN apt-get install apt-utils -y
 RUN apt-get install supervisor -y
 RUN LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y postfix postfix-ldap
@@ -32,8 +32,9 @@ RUN useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m vmail
 ADD init.sh /root/vmail
 ADD script /root/vmail
 
-RUN ln -s /root/vmail/script /add_domain
-RUN ln -s /root/vmail/script /add_alias
-RUN ln -s /root/vmail/script /add_account
+RUN chmod +x /root/vmail/script
+RUN ln -s /root/vmail/script /bin/add_domain
+RUN ln -s /root/vmail/script /bin/add_alias
+RUN ln -s /root/vmail/script /bin/add_account
 
 CMD ["/usr/bin/supervisord"]

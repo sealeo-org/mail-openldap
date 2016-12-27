@@ -64,7 +64,7 @@ ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f $TMP
 if [ ! -e /root/vmail/docker_bootstrapped ]; then
 	status "configuring docker for first run"
 
-configPostfix() { 
+configPostfix(){ 
 TMP=$(mktemp)
 sed -r "s/^(smtpd_banner = ).*$/\1mail.$LDAP_DOMAIN_BASE ESMTP Server ready/" /etc/postfix/main.cf > $TMP 
 TMP2=$(mktemp)
@@ -75,7 +75,7 @@ cat > /etc/postfix/ldap-domains.cf << EOF
 server_host = ldap
 server_port = 389
 search_base = dc=mail,$DC
-query_filter = (&(description=virtualDomain)(dc=%s))
+query_filter = (&(description=virtualDomain)(dc=*))
 result_attribute = dc
 bind = yes
 bind_dn = cn=admin,$DC
@@ -84,10 +84,10 @@ version = 3
 EOF
 
 cat > /etc/postfix/ldap-aliases.cf << EOF
-server_host = localhost
+server_host = ldap
 server_port = 389
 search_base = dc=mail,$DC
-query_filter = (&(objectClass=CourierMailAlias)(mail=%s))
+query_filter = (&(objectClass=CourierMailAlias)(mail=*))
 result_attribute = maildrop
 bind = yes
 bind_dn = cn=admin,$DC
@@ -96,10 +96,10 @@ version = 3
 EOF
 
 cat > /etc/postfix/ldap-accounts.cf << EOF
-server_host = localhost
+server_host = ldap
 server_port = 389
-search_base = ou=people,$DC
-query_filter = (&(objectClass=CourierMailAccount)(mail=%s))
+search_base = dc=mail,$DC
+query_filter = (&(objectClass=CourierMailAccount)(mail=*))
 result_attribute = mailbox
 bind = yes
 bind_dn = cn=admin,$DC

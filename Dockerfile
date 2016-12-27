@@ -30,5 +30,10 @@ ADD postfix.main.cf /root/vmail
 RUN groupadd -g 2000 vmail
 RUN useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m vmail
 ADD init.sh /root/vmail
+ADD script /root/vmail
+
+RUN ln -s /root/vmail/script /add_domain
+RUN ln -s /root/vmail/script /add_alias
+RUN ln -s /root/vmail/script /add_account
 
 CMD ["/usr/bin/supervisord"]

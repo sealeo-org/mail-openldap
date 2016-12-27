@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 DC='dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 1)',dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 2)
 
-if [ $(basename $0) == 'add_domain' ]; then
+if [ "$(basename $0)" == "add_domain" ] ; then
 echo -n "Domain ?"
 read DOMAIN
 echo -n "Password ?"
@@ -32,10 +32,11 @@ objectClass: top
 objectClass: dcObject
 objectClass: organization
 EOF
+
 ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /tmp/domain.ldif
 fi
 
-if [ $(basename $0) == 'add_alias' ]; then
+if [ "$(basename $0)" == "add_alias" ]; then
 echo -n 'Domain ?'
 read DOMAIN
 echo -n 'User ?'
@@ -47,7 +48,7 @@ while read DEST; do
 	USERS="$USERS,$DEST"
 done
 
-USER=$(echo $USER | tr 'a-z' 'A-Z')
+USER=$(echo $USER | tr 'A-Z' 'a-z')
 cat > '/tmp/alias.ldif' <<EOF
 dn:mail=$USER@$DOMAIN,dc=mailAlias,dc=$LDAP_DOMAIN_BASE,dc=mail,$DC
 cn:$USER@$DOMAIN
@@ -59,26 +60,28 @@ objectClass: top
 objectClass: inetOrgPerson
 objectClass: CourierMailAlias
 EOF
+
 ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f '/tmp/alias.ldif'
 
 fi
 
-if [ $(basename $0) == 'add_account' ]; then
+if [ "$(basename $0)" == "add_account" ]; then
 echo -n "Domain ?"
 read DOMAIN
 echo -n "User ?"
 read USER
 echo -n "UID ?"
-read UID
+read USERID
 echo -n "Password ?"
 read PASSWORD
 
-USER=$(echo $USER | tr 'a-z' 'A-Z')
-if [ $(ldapsearch -h ldap -b "ou=people,$DC" -D "cn=admin,$DC" -w "$LDAP_PASSWORD" -P 3 -LLL "(mail=$USER)" uid | wc -b ) -eq 0 ] mail
+USER=$(echo $USER | tr 'A-Z' 'a-z')
+if [ $(ldapsearch -h ldap -b "ou=people,$DC" -D "cn=admin,$DC" -w "$LDAP_PASSWORD" -P 3 -LLL "(mail=$USER)" uid | wc -l ) -eq 0 ]; then
 
-cat > '/tmp/alias.ldif' <<EOF
-dn:mail=$USER@$DOMAIN,dc=mailaccount,dc=$domain,dc=mail,$dc
+cat > '/tmp/account.ldif' <<EOF
+dn:mail=$USER@$DOMAIN,dc=mailaccount,dc=$DOMAIN,dc=mail,$DC
 cn:$USER@$DOMAIN
+sn:$USER
 mail:$USER@$DOMAIN
 mailbox: $DOMAIN/$USER/
 homeDirectory: /vmail/
@@ -86,8 +89,9 @@ objectClass: top
 objectClass: inetOrgPerson
 objectClass: CourierMailAccount
 userPassword: $(slappasswd -s $PASSWORD -h {SSHA})
-
 EOF
-ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /tmp/domain.ldif
+
+ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /tmp/account.ldif
+fi
 fi
 

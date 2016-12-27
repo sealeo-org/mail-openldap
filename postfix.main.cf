@@ -1,22 +1,12 @@
-# Ici, nous indiquons le fichier contenant la liste des domaines
-# que l’on peut prendre en charge (/etc/postfix/ldap-domains.cf)
-# le préfixe ldap: sert à préciser qu’il s’agit de fichiers contenant
-# des paramètres d’accès à l’annuaire
+# List of available domains
 virtual_mailbox_domains = ldap:/etc/postfix/ldap-domains.cf
-# Ici, nous indiquons le répertoire dans lequel sera contenu toutes
-# les mailbox
-virtual_mailbox_base = /home/vmail
-# Ici, nous indiquons le fichier contenant la liste des
-# correspondances entre adresses email et répertoire de stockage
+# Mailbox storage
+virtual_mailbox_base = /vmail
+# Link between email address and mailbox
 virtual_mailbox_maps = ldap:/etc/postfix/ldap-accounts.cf
-# Ici, sans entrer dans les détails, il s’agit de correspondances
-# entre adresse mail virtuelle et utilisateur réel. Ici le static
-# indique que cet utilisateur sera toujours le même, indépendamment de
-# l’adresse mail. L’uid et le gid renseigné sont ceux que l’on a
-# choisi lors de la création de ces utilisateurs
+# Link between virtual address and real user
 virtual_minimum_uid = 100
 virtual_gid_maps = static:2000
 virtual_uid_maps = static:2000
-# Ici, nous indiquons le fichier contenant la liste des
-# correspondances entre alias mail et adresse réelle
+# Link between alias address and email address
 virtual_alias_maps = ldap:/etc/postfix/ldap-aliases.cf

@@ -8,6 +8,7 @@ RUN LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y postfix postfix-l
 RUN apt-get install wget -y
 RUN apt-get install ldap-utils && apt-get install vim -y
 RUN apt-get install libodbc1 libslp1 libwrap0 -y
+RUN apt-get install sasl2-bin libsasl2-modules-ldap -y
 
 ENV LDAP_PASSWORD password
 ENV LDAP_DOMAIN_BASE example.com

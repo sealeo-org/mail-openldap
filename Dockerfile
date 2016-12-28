@@ -9,6 +9,7 @@ RUN apt-get install wget -y
 RUN apt-get install ldap-utils && apt-get install vim -y
 RUN apt-get install libodbc1 libslp1 libwrap0 -y
 RUN apt-get install sasl2-bin libsasl2-modules-ldap -y
+RUN apt-get install -y dovecot-imapd dovecot-pop3d dovecot-ldap -y
 
 ENV LDAP_PASSWORD password
 ENV LDAP_DOMAIN_BASE example.com
@@ -22,7 +23,9 @@ RUN echo "[supervisord]" > /etc/supervisord.conf && \
     echo "autorestart=false" >> /etc/supervisord.conf
 
 EXPOSE 25
-EXPOSE 565
+EXPOSE 587
+EXPOSE 143
+EXPOSE 993
 
 VOLUME ["/vmail"]
 

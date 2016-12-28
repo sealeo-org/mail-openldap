@@ -10,6 +10,9 @@ set -x
 
 DC='dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 1)',dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 2)
 
+setValue() {
+sed -i "s/^#\?\($1 =\).*$/\1$2/" $3
+}
 installCmd() {
 	cd /tmp
 	apt-get download slapd
@@ -61,12 +64,12 @@ EOF
 ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f $TMP
 }
 
-if [ ! -e /root/vmail/docker_bootstrapped ]; then
+if [ ! -e /root/vmail/docker_configured ]; then
 	status "configuring docker for first run"
 
 configPostfix(){ 
 TMP=$(mktemp)
-sed -r "s/^(smtpd_banner = ).*$/\1mail.$LDAP_DOMAIN_BASE ESMTP Server ready/" /etc/postfix/main.cf > $TMP 
+sed -r "s/^(smtpd_banner = ).*$/\1smtp.$LDAP_DOMAIN_BASE ESMTP Server ready/" /etc/postfix/main.cf > $TMP 
 TMP2=$(mktemp)
 sed -r "s/^(smtpd?_tls_?.*)$/#\1/g" $TMP > /etc/postfix/main.cf
 cat /root/vmail/postfix.main.cf >> /etc/postfix/main.cf
@@ -168,12 +171,41 @@ adduser postfix sasl
 /etc/init.d/postfix restart
 }
 
+configIMAP(){
+sed -i 's/^.*\(disable_plaintext_auth = \).*$/\1no/' /etc/dovecot/conf.d/10-auth.conf 
+sed -i 's/^.*\(login_greeting = \).*$/\1Server ready/' /etc/dovecot/dovecot.conf
+sed -i 's/^#\?\(mail_location = \).*$/\1\/vmail\/%d\/%n/' /etc/dovecot/conf.d/10-mail.conf
+sed -i 's/^#\?\(mail_uid =\).*$/\1 2000/' /etc/dovecot/conf.d/10-mail.conf
+sed -i 's/^#\?\(mail_gid =\).*$/\1 2000/' /etc/dovecot/conf.d/10-mail.conf
+
+# Enable also login auth_mechanisms
+sed -i 's/^.*\(auth_mechanisms.*\)$/\1 login/' /etc/dovecot/conf.d/10-auth.conf
+
+# Enable authentication with ldap
+sed -i 's/^.*\(!include auth-.*\)$/#\1/' /etc/dovecot/conf.d/10-auth.conf
+sed -i 's/^.*\(!include auth-ldap.*\)$/\1/' /etc/dovecot/conf.d/10-auth.conf
+
+# Configure LDAP auth
+setValue hosts ldap /etc/dovecot/dovecot-ldap.conf.ext
+setValue dn "cn=admin,$DC" /etc/dovecot/dovecot-ldap.conf.ext
+setValue dnpass $LDAP_PASSWORD /etc/dovecot/dovecot-ldap.conf.ext
+setValue ldap_version 3 /etc/dovecot/dovecot-ldap.conf.ext
+setValue base "dc=mail,$DC" /etc/dovecot/dovecot-ldap.conf.ext
+setValue user_attrs "uidNumber=2000,gidNumber=2000" /etc/dovecot/dovecot-ldap.conf.ext
+setValue user_filter "(\&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
+setValue pass_filter "(\&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
+setValue default_pass_scheme SSHA /etc/dovecot/dovecot-ldap.conf.ext
+
+/etc/init.d/dovecot start 
+}
+
 installCmd
 configLDAP
 configPostfix
 configAuth
+configIMAP
 
-touch /root/vmail/docker_bootstrapped
+touch /root/vmail/docker_configured
 
 
 else

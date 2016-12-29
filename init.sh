@@ -11,8 +11,17 @@ set -x
 DC='dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 1)',dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 2)
 
 setValue() {
-sed -i "s/^#\?\($1 =\).*$/\1$2/" $3
+	sed -i "s/^#\?\($1[[:space:]]*=\).*$/\1$2/" $3
 }
+
+uncomment() { 
+	sed -i "$1"' s/^ *#//' "$2"; 
+}
+
+comment() { 
+	sed -i "$1"' s/^/#/' "$2"; 
+}
+
 installCmd() {
 	cd /tmp
 	apt-get download slapd
@@ -167,8 +176,11 @@ ln -s /var/spool/postfix/var/run/saslauthd /var/run
 chgrp sasl /var/spool/postfix/var/run/saslauthd
 adduser postfix sasl
 
-/etc/init.d/saslauthd start
-/etc/init.d/postfix restart
+
+uncomment '/submission/,/-o milter/' /etc/postfix/master.cf;
+uncomment '/smtps/,/-o milter/' /etc/postfix/master.cf; 
+comment "/mua_client/,/mua_sender/" /etc/postfix/master.cf;
+
 }
 
 configIMAP(){
@@ -196,7 +208,56 @@ setValue user_filter "(\&(objectClass=CourierMailAccount)(mail=%u))" /etc/doveco
 setValue pass_filter "(\&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
 setValue default_pass_scheme SSHA /etc/dovecot/dovecot-ldap.conf.ext
 
-/etc/init.d/dovecot start 
+sed -i '/inbox = yes/a \
+  mailbox Trash { \
+    auto = no \
+    special_use = \\Trash \
+  } \
+  mailbox Drafts { \
+    auto = no \
+    special_use = \\Drafts \
+  } \
+  mailbox Sent { \
+    auto = subscribe # autocreate and autosubscribe the Sent mailbox \
+    special_use = \\Sent \
+  } \
+  mailbox \"Sent Messages\" { \
+    auto = no \
+    special_use = \\Sent \
+  } \
+  mailbox Spam { \
+    auto = create # autocreate Spam, but dont autosubscribe \
+    special_use = \\Junk \
+  } \
+  mailbox virtual\/All { # if you have a virtual \"All messages\" mailbox \
+    auto = no \
+    special_use = \\All \
+  }' /etc/dovecot/conf.d/10-mail.conf
+}
+
+configSSL() {
+setValue smtpd_tls_cert_file "\/ssl\/smtp.${LDAP_DOMAIN_BASE}.cert.pem" /etc/postfix/main.cf
+setValue smtpd_tls_key_file "\/ssl\/smtp.${LDAP_DOMAIN_BASE}.key.pem" /etc/postfix/main.cf
+uncomment '/smtpd_tls_session_cache_database/,/smtp_tls_session_cache_database/' /etc/postfix/main.cf;
+sed -i "/smtp_tls_session_cache_database/asmtpd_tls_auth_only=yes" /etc/postfix/main.cf
+
+cat >> /etc/postfix/main.cf <<EOF
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+EOF
+
+cat >> /etc/postfix/master.cf <<'EOF'
+dovecot   unix  -       n       n       -       -       pipe
+  flags=DRhu user=email:email argv=/usr/lib/dovecot/deliver -f ${sender} -d ${recipient}
+EOF
+
+setValue ssl 'required' /etc/dovecot/conf.d/10-ssl.conf
+setValue ssl_cert "\/ssl\/imap.${LDAP_DOMAIN_BASE}.cert.pem" /etc/dovecot/conf.d/10-ssl.conf
+setValue ssl_key "\/ssl\/imap.${LDAP_DOMAIN_BASE}.key.pem" /etc/dovecot/conf.d/10-ssl.conf
+setValue disable_plaintext_auth 'yes' /etc/dovecot/conf.d/10-auth.conf
+
+sed -i "/unix_listener \/var\/spool\/postfix\/private\/auth/,/}/"' d' /etc/dovecot/conf.d/10-master.conf 
+sed -i "/smtp-auth/aunix_listener \/var\/spool\/postfix\/private\/auth {\n     mode = 0660\n    user = postfix\n    group = postfix\n}\n" /etc/dovecot/conf.d/10-master.conf
 }
 
 installCmd
@@ -204,6 +265,12 @@ configLDAP
 configPostfix
 configAuth
 configIMAP
+configSSL
+
+/etc/init.d/saslauthd start
+#kill -9 $(ps auwx | grep  "[/]usr/lib/postfix" | tr -s ' ' | cut -d ' ' -f 2)
+/etc/init.d/postfix start
+/etc/init.d/dovecot start 
 
 touch /root/vmail/docker_configured
 

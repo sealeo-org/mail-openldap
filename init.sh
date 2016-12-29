@@ -77,6 +77,7 @@ if [ ! -e /root/vmail/docker_configured ]; then
 	status "configuring docker for first run"
 
 configPostfix(){ 
+setValue myhostname ${LDAP_DOMAIN_BASE} /etc/postfix/main.cf
 TMP=$(mktemp)
 sed -r "s/^(smtpd_banner = ).*$/\1smtp.$LDAP_DOMAIN_BASE ESMTP Server ready/" /etc/postfix/main.cf > $TMP 
 TMP2=$(mktemp)

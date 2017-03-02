@@ -1,8 +1,8 @@
-# speed/mail-openldap
+# sealeo/mail-openldap
 
-A docker container to manage multidomain emails based on LDAP architecture
+A docker container to manage multidomain emails based on LDAP architecture 
 
-[hub]: https://hub.docker.com/r/speed/mail-openldap/mail
+[hub]: https://hub.docker.com/r/sealeo/mail-openldap/mail
 
-Mail : postfix, dovecot - [Docker Hub](https://hub.docker.com/r/speed/mail-openldap/) 
+Mail : postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openldap/) 
 

@@ -1,5 +1,5 @@
 FROM debian:8.2
-MAINTAINER Speed03 <speed@infinity.ovh>
+MAINTAINER Pierre GUINAULT <speed@infinity.ovh>
 
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install apt-utils -y
@@ -32,7 +32,6 @@ RUN echo "[supervisord]" > /etc/supervisord.conf && \
 
 EXPOSE 25
 EXPOSE 587
-EXPOSE 143
 EXPOSE 993
 
 VOLUME ["/vmail"]
@@ -47,8 +46,8 @@ ADD script /root/vmail
 RUN chown -R 2000:2000 /vmail/
 
 RUN chmod +x /root/vmail/script
-RUN ln -s /root/vmail/script /bin/add_domain
-RUN ln -s /root/vmail/script /bin/add_alias
-RUN ln -s /root/vmail/script /bin/add_account
+RUN ln -s /root/vmail/script /usr/local/bin/add_domain
+RUN ln -s /root/vmail/script /usr/local/bin/add_alias
+RUN ln -s /root/vmail/script /usr/local/bin/add_account
 
 CMD ["/usr/bin/supervisord"]

@@ -14,7 +14,6 @@ RUN apt-get install -y dovecot-imapd dovecot-pop3d dovecot-ldap -y
 
 ENV LDAP_PASSWORD password
 ENV LDAP_DOMAIN_BASE example.com
-ENV DOMAIN_PASSWORD password
 ENV SSL_SMTP_CERT smtp.cert
 ENV SSL_SMTP_KEY  smtp.key
 ENV SSL_IMAP_CERT imap.cert
@@ -48,6 +47,6 @@ RUN chown -R 2000:2000 /vmail/
 RUN chmod +x /root/vmail/script
 RUN ln -s /root/vmail/script /usr/local/bin/add_domain
 RUN ln -s /root/vmail/script /usr/local/bin/add_alias
-RUN ln -s /root/vmail/script /usr/local/bin/add_account
+RUN ln -s /root/vmail/script /usr/local/bin/add_email
 
 CMD ["/usr/bin/supervisord"]

@@ -1,7 +1,0 @@
-dc: mail
-o: mail
-objectClass: top
-objectClass: dcObject
-objectClass: organization
-
-

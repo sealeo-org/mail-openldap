@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -eu
+LC_CTYPE=C.UTF-8
 
 status () {
 	echo "---> ${@}" >&2
@@ -11,7 +12,8 @@ set -x
 DC='dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 1)',dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 2)
 
 setValue() {
-	sed -i "s/^#\?\($1[[:space:]]*=\).*$/\1$2/" $3
+	VAR=$(echo $2 | sed 's#\([]\#\%\@\*\$\/&[]\)#\\\1#g')
+	sed -i "s/^#\?\($1[[:space:]]*=\).*$/\1$VAR/" $3
 }
 
 uncomment() { 
@@ -20,6 +22,10 @@ uncomment() {
 
 comment() { 
 	sed -i "$1"' s/^/#/' "$2"; 
+}
+
+genPwd() {
+	date +%s | sha256sum | base64 | head -c 32 ; echo	
 }
 
 installCmd() {
@@ -31,6 +37,7 @@ installCmd() {
 }
 
 configLDAP () {
+if ! ldapsearch -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -b $DC dc=mail | grep dc: > /dev/null; then 
 cd /root/vmail/
 cat > mail.ldif <<EOF
 dn:dc=mail,$DC
@@ -40,10 +47,39 @@ objectClass: top
 objectClass: dcObject
 objectClass: organization
 EOF
-
 ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /root/vmail/mail.ldif
+fi
 
-PASS=$(slappasswd -s $DOMAIN_PASSWORD -h {SSHA})
+CLEAR_DOVECOT_PASS=$(genPwd)
+DOVECOT_PASS=$(slappasswd -s $CLEAR_DOVECOT_PASS -h {SSHA})
+if ! ldapsearch -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -b $DC cn=dovecot | grep cn: > /dev/null; then
+cd /root/vmail/
+cat > dovecot.ldif <<EOF
+dn: cn=dovecot,$DC
+cn: dovecot
+displayname: dovecot
+givenname: dovecot
+mail: dovecot@$LDAP_DOMAIN_BASE
+objectclass: top
+objectclass: inetOrgPerson
+sn: dovecot
+uid: dovecot
+userPassword: $DOVECOT_PASS
+EOF
+ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /root/vmail/dovecot.ldif
+else
+cd /root/vmail/
+cat > dovecot.ldif <<EOF
+dn: cn=dovecot,$DC
+changetype: modify
+replace: userPassword
+userPassword: $DOVECOT_PASS
+EOF
+ldapmodify -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /root/vmail/dovecot.ldif
+fi
+
+if ! ldapsearch -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -b dc=mail,$DC dc=$LDAP_DOMAIN_BASE | grep dc: > /dev/null; then 
+
 TMP=$(mktemp)
 O=$(echo $LDAP_DOMAIN_BASE | sed -r 's/(.*)\.(.*)/\1\2/')
 cat > $TMP <<EOF
@@ -51,7 +87,6 @@ dn:dc=$LDAP_DOMAIN_BASE,dc=mail,$DC
 o: $O
 dc: $LDAP_DOMAIN_BASE
 description: virtualDomain
-userPassword: $PASS
 objectClass: top
 objectClass: dcObject
 objectClass: organization
@@ -70,11 +105,12 @@ objectClass: top
 objectClass: dcObject
 objectClass: organization
 EOF
+
 ldapadd -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f $TMP
+fi
+
 }
 
-if [ ! -e /root/vmail/docker_configured ]; then
-	status "configuring docker for first run"
 
 configPostfix(){ 
 setValue myhostname ${LDAP_DOMAIN_BASE} /etc/postfix/main.cf
@@ -187,7 +223,7 @@ comment "/mua_client/,/mua_sender/" /etc/postfix/master.cf;
 configIMAP(){
 sed -i 's/^.*\(disable_plaintext_auth = \).*$/\1no/' /etc/dovecot/conf.d/10-auth.conf 
 sed -i 's/^.*\(login_greeting = \).*$/\1Server ready/' /etc/dovecot/dovecot.conf
-sed -i 's/^#\?\(mail_location = \).*$/\1\/vmail\/%d\/%n/' /etc/dovecot/conf.d/10-mail.conf
+sed -i 's/^#\?\(mail_location = \).*$/\1maildir:\/vmail\/%d\/%n/' /etc/dovecot/conf.d/10-mail.conf
 sed -i 's/^#\?\(mail_uid =\).*$/\1 2000/' /etc/dovecot/conf.d/10-mail.conf
 sed -i 's/^#\?\(mail_gid =\).*$/\1 2000/' /etc/dovecot/conf.d/10-mail.conf
 
@@ -200,45 +236,40 @@ sed -i 's/^.*\(!include auth-ldap.*\)$/\1/' /etc/dovecot/conf.d/10-auth.conf
 
 # Configure LDAP auth
 setValue hosts ldap /etc/dovecot/dovecot-ldap.conf.ext
-setValue dn "cn=admin,$DC" /etc/dovecot/dovecot-ldap.conf.ext
-setValue dnpass $LDAP_PASSWORD /etc/dovecot/dovecot-ldap.conf.ext
+setValue dn "cn=dovecot,$DC" /etc/dovecot/dovecot-ldap.conf.ext
+setValue dnpass "$CLEAR_DOVECOT_PASS" /etc/dovecot/dovecot-ldap.conf.ext
+setValue debug_level -1 /etc/dovecot/dovecot-ldap.conf.ext
+setValue auth_debug "yes" /etc/dovecot/conf.d/10-logging.conf
+setValue auth_debug_passwords "yes" /etc/dovecot/conf.d/10-logging.conf
 setValue ldap_version 3 /etc/dovecot/dovecot-ldap.conf.ext
 setValue base "dc=mail,$DC" /etc/dovecot/dovecot-ldap.conf.ext
 setValue user_attrs "uidNumber=2000,gidNumber=2000" /etc/dovecot/dovecot-ldap.conf.ext
-setValue user_filter "(\&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
-setValue pass_filter "(\&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
+setValue user_filter "(&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
+setValue pass_filter "(&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
 setValue default_pass_scheme SSHA /etc/dovecot/dovecot-ldap.conf.ext
 
 sed -i '/inbox = yes/a \
   mailbox Trash { \
-    auto = no \
+    auto = subscribe \
     special_use = \\Trash \
   } \
   mailbox Drafts { \
-    auto = no \
+    auto = subscribe \
     special_use = \\Drafts \
   } \
   mailbox Sent { \
     auto = subscribe # autocreate and autosubscribe the Sent mailbox \
     special_use = \\Sent \
   } \
-  mailbox \"Sent Messages\" { \
-    auto = no \
-    special_use = \\Sent \
-  } \
   mailbox Spam { \
-    auto = create # autocreate Spam, but dont autosubscribe \
+    auto = subscribe # autocreate Spam, but dont autosubscribe \
     special_use = \\Junk \
-  } \
-  mailbox virtual\/All { # if you have a virtual \"All messages\" mailbox \
-    auto = no \
-    special_use = \\All \
   }' /etc/dovecot/conf.d/10-mail.conf
 }
 
 configSSL() {
-setValue smtpd_tls_cert_file "\/ssl\/smtp.${LDAP_DOMAIN_BASE}\/fullchain.pem" /etc/postfix/main.cf
-setValue smtpd_tls_key_file "\/ssl\/smtp.${LDAP_DOMAIN_BASE}\/privkey.pem" /etc/postfix/main.cf
+setValue smtpd_tls_cert_file "/ssl/smtp.${LDAP_DOMAIN_BASE}/fullchain.pem" /etc/postfix/main.cf
+setValue smtpd_tls_key_file "/ssl/smtp.${LDAP_DOMAIN_BASE}/privkey.pem" /etc/postfix/main.cf
 uncomment '/smtpd_tls_session_cache_database/,/smtp_tls_session_cache_database/' /etc/postfix/main.cf;
 sed -i "/smtp_tls_session_cache_database/asmtpd_tls_auth_only=no" /etc/postfix/main.cf
 
@@ -253,14 +284,17 @@ dovecot   unix  -       n       n       -       -       pipe
 EOF
 
 setValue ssl 'required' /etc/dovecot/conf.d/10-ssl.conf
-setValue ssl_cert "<\/ssl\/imap.${LDAP_DOMAIN_BASE}\/fullchain.pem" /etc/dovecot/conf.d/10-ssl.conf
-setValue ssl_key "<\/ssl\/imap.${LDAP_DOMAIN_BASE}\/privkey.pem" /etc/dovecot/conf.d/10-ssl.conf
+setValue ssl_cert "</ssl/imap.${LDAP_DOMAIN_BASE}/fullchain.pem" /etc/dovecot/conf.d/10-ssl.conf
+setValue ssl_key "</ssl/imap.${LDAP_DOMAIN_BASE}/privkey.pem" /etc/dovecot/conf.d/10-ssl.conf
 setValue disable_plaintext_auth 'yes' /etc/dovecot/conf.d/10-auth.conf
 
 sed -i "/unix_listener \/var\/spool\/postfix\/private\/auth/,/}/"' d' /etc/dovecot/conf.d/10-master.conf 
-sed -i "/smtp-auth/aunix_listener \/var\/spool\/postfix\/private\/auth {\n     mode = 0660\n    user = postfix\n    group = postfix\n}\n" /etc/dovecot/conf.d/10-master.conf
+sed -i "/smtp-auth/aunix_listener /var/spool/postfix/private/auth {\n     mode = 0660\n    user = postfix\n    group = postfix\n}\n" /etc/dovecot/conf.d/10-master.conf
+
 }
 
+if [ ! -e /root/vmail/docker_configured ]; then
+	status "configuring docker for first run"
 installCmd
 configLDAP
 configPostfix
@@ -278,6 +312,10 @@ touch /root/vmail/docker_configured
 
 else
 	status "found already-configured docker"
+	/etc/init.d/saslauthd start
+	#kill -9 $(ps auwx | grep  "[/]usr/lib/postfix" | tr -s ' ' | cut -d ' ' -f 2)
+	/etc/init.d/postfix start
+	/etc/init.d/dovecot start 
 fi
 
 set -x

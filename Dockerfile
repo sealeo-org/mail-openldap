@@ -53,4 +53,4 @@ RUN ln -s /root/vmail/script /usr/local/bin/add_email
 
 RUN LC_CTYPE=C.UTF-8
 
-CMD ["/usr/bin/supervisord", "-c /etc/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c/etc/supervisord.conf"]

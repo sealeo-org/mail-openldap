@@ -34,6 +34,7 @@ services:
     external_links:
     - ldap
     environment:
+		- MAIL_DOMAIN=mydomain.com
     - LDAP_PASSWORD=password
     - LDAP_DOMAIN_BASE=mydomain.com
 ```

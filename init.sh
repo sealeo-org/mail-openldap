@@ -71,26 +71,26 @@ EOF
 		ldapmodify -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -f /root/vmail/dovecot.ldif
 	fi
 
-	if ! ldapsearch -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -b dc=mail,$DC dc=$LDAP_DOMAIN_BASE | grep dc: > /dev/null; then 
+	if ! ldapsearch -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -b dc=mail,$DC dc=$MAIL_DOMAIN | grep dc: > /dev/null; then 
 		TMP=$(mktemp)
-		O=$(echo $LDAP_DOMAIN_BASE | sed -r 's/(.*)\.(.*)/\1\2/')
+		O=$(echo $MAIL_DOMAIN | sed -r 's/(.*)\.(.*)/\1\2/')
 		cat > $TMP <<EOF
-dn:dc=$LDAP_DOMAIN_BASE,dc=mail,$DC
+dn:dc=$MAIL_DOMAIN,dc=mail,$DC
 o: $O
-dc: $LDAP_DOMAIN_BASE
+dc: $MAIL_DOMAIN
 description: virtualDomain
 objectClass: top
 objectClass: dcObject
 objectClass: organization
 
-dn:dc=mailAccount,dc=$LDAP_DOMAIN_BASE,dc=mail,$DC
+dn:dc=mailAccount,dc=$MAIL_DOMAIN,dc=mail,$DC
 dc: mailAccount
 o: mailAccount
 objectClass: top
 objectClass: dcObject
 objectClass: organization
 
-dn:dc=mailAlias,dc=$LDAP_DOMAIN_BASE,dc=mail,$DC
+dn:dc=mailAlias,dc=$MAIL_DOMAIN,dc=mail,$DC
 dc: mailAlias
 o: mailAlias
 objectClass: top
@@ -103,9 +103,9 @@ EOF
 
 
 configPostfix(){ 
-	setValue myhostname ${LDAP_DOMAIN_BASE} /etc/postfix/main.cf
+	setValue myhostname ${MAIL_DOMAIN} /etc/postfix/main.cf
 	TMP=$(mktemp)
-	sed -r "s/^(smtpd_banner = ).*$/\1smtp.$LDAP_DOMAIN_BASE ESMTP Server ready/" /etc/postfix/main.cf > $TMP 
+	sed -r "s/^(smtpd_banner = ).*$/\1smtp.$MAIL_DOMAIN ESMTP Server ready/" /etc/postfix/main.cf > $TMP 
 	TMP2=$(mktemp)
 	sed -r "s/^(smtpd?_tls_?.*)$/#\1/g" $TMP > /etc/postfix/main.cf
 	cat /root/vmail/postfix.main.cf >> /etc/postfix/main.cf
@@ -256,8 +256,8 @@ configIMAP(){
 }
 
 configSSL() {
-	setValue smtpd_tls_cert_file "/ssl/smtp.${LDAP_DOMAIN_BASE}/fullchain.pem" /etc/postfix/main.cf
-	setValue smtpd_tls_key_file "/ssl/smtp.${LDAP_DOMAIN_BASE}/privkey.pem" /etc/postfix/main.cf
+	setValue smtpd_tls_cert_file "/ssl/smtp.${MAIL_DOMAIN}/fullchain.pem" /etc/postfix/main.cf
+	setValue smtpd_tls_key_file "/ssl/smtp.${MAIL_DOMAIN}/privkey.pem" /etc/postfix/main.cf
 	uncomment '/smtpd_tls_session_cache_database/,/smtp_tls_session_cache_database/' /etc/postfix/main.cf;
 	sed -i "/smtp_tls_session_cache_database/asmtpd_tls_auth_only=no" /etc/postfix/main.cf
 
@@ -272,8 +272,8 @@ dovecot   unix  -       n       n       -       -       pipe
 EOF
 
 	setValue ssl 'required' /etc/dovecot/conf.d/10-ssl.conf
-	setValue ssl_cert "</ssl/imap.${LDAP_DOMAIN_BASE}/fullchain.pem" /etc/dovecot/conf.d/10-ssl.conf
-	setValue ssl_key "</ssl/imap.${LDAP_DOMAIN_BASE}/privkey.pem" /etc/dovecot/conf.d/10-ssl.conf
+	setValue ssl_cert "</ssl/imap.${MAIL_DOMAIN}/fullchain.pem" /etc/dovecot/conf.d/10-ssl.conf
+	setValue ssl_key "</ssl/imap.${MAIL_DOMAIN}/privkey.pem" /etc/dovecot/conf.d/10-ssl.conf
 	setValue disable_plaintext_auth 'yes' /etc/dovecot/conf.d/10-auth.conf
 
 	sed -i "/unix_listener \/var\/spool\/postfix\/private\/auth/,/}/"' d' /etc/dovecot/conf.d/10-master.conf 
@@ -282,6 +282,7 @@ EOF
 
 if [ ! -e /root/vmail/docker_configured ]; then
 	status "configuring docker for first run"
+	chown -R vmail: /vmail
 	installCmd
 	configLDAP
 	configPostfix

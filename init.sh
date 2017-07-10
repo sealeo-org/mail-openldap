@@ -21,14 +21,6 @@ genPwd() {
 	date +%s | sha256sum | base64 | head -c 32 ; echo	
 }
 
-installCmd() {
-	cd /tmp
-	apt-get download slapd
-	dpkg-deb --extract $(ls slapd*.deb) .
-	cp -rf usr/lib/* /usr/lib
-	cp usr/sbin/slappasswd /usr/sbin/
-}
-
 configLDAP () {
 	if ! ldapsearch -x -h ldap -D cn=admin,$DC -w ${LDAP_PASSWORD} -b $DC dc=mail | grep dc: > /dev/null; then 
 		cd /root/vmail/
@@ -283,7 +275,6 @@ EOF
 if [ ! -e /root/vmail/docker_configured ]; then
 	status "configuring docker for first run"
 	chown -R vmail: /vmail
-	installCmd
 	configLDAP
 	configPostfix
 	configAuth

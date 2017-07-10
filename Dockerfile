@@ -30,21 +30,17 @@ ENV SSL_IMAP_CERT    imap.cert
 ENV SSL_IMAP_KEY     imap.key
 ENV MAIL_DOMAIN      exemple.com
 
-ADD ./supervisord.conf /etc/supervisord.conf
-
-EXPOSE 25
-EXPOSE 587
-EXPOSE 993
-
-VOLUME ["/vmail"]
-VOLUME ["/ssl"]
-
 RUN mkdir /root/vmail
-ADD postfix.main.cf /root/vmail
 RUN groupadd -g 2000 vmail
 RUN useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m vmail
+
+ADD ./supervisord.conf /etc/supervisord.conf
+
+ADD postfix.main.cf /root/vmail
 ADD init.sh /root/vmail
 ADD script /root/vmail
+
+ADD ./slapd /
 
 RUN chmod +x /root/vmail/script
 RUN ln -s /root/vmail/script /usr/local/bin/add_domain
@@ -52,5 +48,12 @@ RUN ln -s /root/vmail/script /usr/local/bin/add_alias
 RUN ln -s /root/vmail/script /usr/local/bin/add_email
 
 RUN LC_CTYPE=C.UTF-8
+
+EXPOSE 25
+EXPOSE 587
+EXPOSE 993
+
+VOLUME ["/vmail"]
+VOLUME ["/ssl"]
 
 CMD ["/usr/bin/supervisord", "-c/etc/supervisord.conf"]

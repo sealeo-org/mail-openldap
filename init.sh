@@ -258,7 +258,7 @@ smtpd_sasl_type = dovecot
 smtpd_sasl_path = private/auth
 EOF
 
-	cat >> /etc/postfix/master.cf <<EOF
+	cat >> /etc/postfix/master.cf <<'EOF'
 dovecot   unix  -       n       n       -       -       pipe
   flags=DRhu user=email:email argv=/usr/lib/dovecot/deliver -f ${sender} -d ${recipient}
 EOF

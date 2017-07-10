@@ -1,11 +1,11 @@
 #!/bin/bash
 
-set -eu
+set -eux
 LC_CTYPE=C.UTF-8
 
-status () { echo "---> ${@}" >&2 }
-
-set -x
+status() {
+	echo>&2 "---> ${@}"
+}
 
 DC='dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 1)',dc='$(echo ${LDAP_DOMAIN_BASE} | cut -d "." -f 2)
 
@@ -110,7 +110,7 @@ configPostfix(){
 	sed -r "s/^(smtpd?_tls_?.*)$/#\1/g" $TMP > /etc/postfix/main.cf
 	cat /root/vmail/postfix.main.cf >> /etc/postfix/main.cf
 
-	cat > /etc/postfix/ldap-domains.cf << EOF
+	cat > /etc/postfix/ldap-domains.cf <<EOF
 server_host = ldap
 server_port = 389
 search_base = dc=mail,$DC
@@ -122,7 +122,7 @@ bind_pw = $LDAP_PASSWORD
 version = 3
 EOF
 
-	cat > /etc/postfix/ldap-aliases.cf << EOF
+	cat > /etc/postfix/ldap-aliases.cf <<EOF
 server_host = ldap
 server_port = 389
 search_base = dc=mail,$DC
@@ -134,7 +134,7 @@ bind_pw = $LDAP_PASSWORD
 version = 3
 EOF
 
-	cat > /etc/postfix/ldap-accounts.cf << EOF
+	cat > /etc/postfix/ldap-accounts.cf <<EOF
 server_host = ldap
 server_port = 389
 search_base = dc=mail,$DC
@@ -168,7 +168,7 @@ ldap_version: 3
 ldap_auth_method: bind
 EOF
 
-	cat > /etc/postfix/sasl/smtpd.conf << EOF
+	cat > /etc/postfix/sasl/smtpd.conf <<EOF
 pwcheck_method: saslauthd
 mech_list: plain login
 EOF
@@ -266,7 +266,7 @@ smtpd_sasl_type = dovecot
 smtpd_sasl_path = private/auth
 EOF
 
-	cat >> /etc/postfix/master.cf <<'EOF'
+	cat >> /etc/postfix/master.cf <<EOF
 dovecot   unix  -       n       n       -       -       pipe
   flags=DRhu user=email:email argv=/usr/lib/dovecot/deliver -f ${sender} -d ${recipient}
 EOF
@@ -303,5 +303,3 @@ else
 	/etc/init.d/postfix start
 	/etc/init.d/dovecot start 
 fi
-
-set -x

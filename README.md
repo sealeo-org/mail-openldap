@@ -28,7 +28,7 @@ services:
     - /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro
     - /home/mail/ssl/smtp.mydomain.com:/ssl/smtp.mydomain.com:ro
     ports:
-    - 25:25
+    - "25:25"
     - 587:587
     - 993:993
     external_links:

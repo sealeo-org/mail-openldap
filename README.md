@@ -51,6 +51,7 @@ services:
 ```
 
 ## DNS
+### Minimal configuration
 Minimal DNS zone configuration for the `MAIL_DOMAIN` (e.g. *mydomain.com* as above)
 ```
 smtp 300 IN A x.x.x.x
@@ -58,7 +59,30 @@ imap 300 IN A x.x.x.x
 mail 10800 IN A x.x.x.x
 @ 10800 IN MX 10 mail.mydomain.com.
 ```
-x.x.x.x is IP address of your mail server.
+x.x.x.x is the IP address of your mail server.
+
+### More advanced configuration
+#### SPF
+See: [SPF on Wikipedia](https://en.wikipedia.org/wiki/Sender_Policy_Framework)
+See: [SPF Wizard](https://www.spfwizard.net/)
+
+Example of possible configuration:
+```
+mydomain.com. IN TXT "v=spf1 mx a ptr ip4:x.x.x.x ~all"
+```
+x.x.x.x is the IP address of your mail server.
+
+#### DKIM
+See: [DKIM on Wikipedia](https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail)
+See the **Add domain** section that explains what is required in DNS for DKIM
+
+#### DMARC
+See: [DMARC on Wikipedia](https://en.wikipedia.org/wiki/DMARC)
+
+Example of possible configuration:
+```
+_dmarc IN TXT "v=DMARC1; p=none"
+```
 
 ## SSL
 soon described

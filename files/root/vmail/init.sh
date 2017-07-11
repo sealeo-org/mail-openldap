@@ -153,7 +153,7 @@ configDKIM() {
 }
 
 # ensure correct writing into configuration files
-/etc/init.d/opendkim stop; pkill opendkim
+/etc/init.d/opendkim stop; pkill opendkim||:
 /etc/init.d/dovecot stop
 postfix stop # avoid an issue with postfix start
 /etc/init.d/saslauthd stop

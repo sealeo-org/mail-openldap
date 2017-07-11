@@ -6,7 +6,7 @@ DKIMDIR=/etc/opendkim
 
 askValue() {
 	read -p "$1? " value
-	[ -z "$value" ]; && exit 0
+	[ -z "$value" ] && exit 0
 	echo $value
 }
 

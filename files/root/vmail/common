@@ -21,6 +21,7 @@ genPwd() {
 }
 
 replaceValues() { 
+	delim=$'\001'
   filename=$1
   shift
   ans=$(cat $filename) 
@@ -29,7 +30,7 @@ replaceValues() {
 		from=%"$1"
 		to="$2"
     shift 2
-    ans=$(echo "$ans"|sed "s$'\001'$from$'\001'$to$'\001'g")
+    ans=$(echo "$ans"|sed "s${delim}$from${delim}$to${delim}g")
   done                                                                                                    
   echo "$ans"
 } 

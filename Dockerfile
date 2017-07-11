@@ -14,6 +14,8 @@ RUN apt-get update && apt-get upgrade -y && \
 	libsasl2-modules-ldap \
 	libslp1 \
 	libwrap0 \
+	opendkim \
+	opendkim-tools \
 	postfix \
 	postfix-ldap \
 	rsyslog \
@@ -34,13 +36,7 @@ ENV SSL_IMAP_CERT    imap.cert
 ENV SSL_IMAP_KEY     imap.key
 ENV MAIL_DOMAIN      exemple.com
 
-COPY ./supervisord.conf /etc/supervisord.conf
-COPY ./root /root
-COPY ./slapd /
-
-RUN ln -s /root/vmail/script /usr/local/bin/add_domain
-RUN ln -s /root/vmail/script /usr/local/bin/add_alias
-RUN ln -s /root/vmail/script /usr/local/bin/add_email
+COPY ./files /
 
 RUN LC_CTYPE=C.UTF-8
 

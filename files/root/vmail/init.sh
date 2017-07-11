@@ -144,6 +144,20 @@ EOF
 	sed -i "/smtp-auth/aunix_listener /var/spool/postfix/private/auth {\n     mode = 0660\n    user = postfix\n    group = postfix\n}\n" /etc/dovecot/conf.d/10-master.conf
 }
 
+configDKIM() {
+	DKIMDIR=/etc/opendkim
+	mkdir -p $DKIMDIR/keys
+	[ ! -e $DKIMDIR/keytable ]     && echo>$DKIMDIR/keytable -n
+	[ ! -e $DKIMDIR/signingtable ] && echo>$DKIMDIR/keytable -n
+	[ ! -e $DKIMDIR/trustedosts ]  && echo>$DKIMDIR/trustedhosts 127.0.0.1 localhost
+}
+
+# ensure correct writing into configuration files
+/etc/init.d/opendkim stop
+/etc/init.d/dovecot stop
+postfix stop # avoid an issue with postfix start
+/etc/init.d/saslauthd stop
+
 if [ ! -e /root/vmail/docker_configured ]; then
 	status "configuring docker for first run"
 	chown -R vmail: /vmail
@@ -153,14 +167,13 @@ if [ ! -e /root/vmail/docker_configured ]; then
 	configAuth
 	configIMAP
 	configSSL
+	configDKIM
 	touch /root/vmail/docker_configured
 else
 	status "found already-configured docker"
 fi
 
-# avoid bug of "postfix already started"
-postfix stop
-
 /etc/init.d/saslauthd start
 /etc/init.d/postfix start
 /etc/init.d/dovecot start 
+/etc/init.d/opendkim start

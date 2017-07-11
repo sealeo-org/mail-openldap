@@ -2,18 +2,46 @@
 
 source /root/vmail/common
 CONFD=/root/conf/script
+DKIMDIR=/etc/opendkim
+
+askValue() {
+	read -p "$1? " value
+	[ -z "$value" ]; && exit 0
+	echo $value
+}
+
+genDkimImpl() {
+	DOMAIN=$1
+
+	echo>>$DKIMDIR/trustedhosts "*.$DOMAIN"
+	echo>>$DKIMDIR/keytable     "mail._domainkey.$DOMAIN $DOMAIN:mail:$DKIMDIR/$DOMAIN/mail.private"
+	echo>>$DKIMDIR/signingtable "*@$DOMAIN mail._domainkey.$DOMAIN"
+
+	KEYDIR=$DKIMDIR/keys/$DOMAIN
+	mkdir -p $KEYDIR
+	(
+		cd $KEYDIR
+		opendkim-genkey -s mail -d $DOMAIN
+	)
+	chown -R opendkim: $KEYDIR/mail.private
+	echo "*****"
+	cat $KEYDIR/mail.txt
+	echo "*****"
+}
 
 add_domain() {
-	read -p 'Domain? ' DOMAIN
+	DOMAIN=$(askValue Domain)
+	LDIF=$(mktemp)
 	O=$(echo $DOMAIN|sed -r 's/(.*)\.(.*)/\1\2/')
-	replaceValues>/tmp/domain.ldif $CONFD/domain.ldif DOMAIN "$DOMAIN" DC "$DC" O "$O"
-	ldapadd $LDAP_OPTS -f /tmp/domain.ldif
+	replaceValues>$LDIF $CONFD/domain.ldif DOMAIN "$DOMAIN" DC "$DC" O "$O"
+	ldapadd $LDAP_OPTS -f $LDIF
+	genDkimImpl $DOMAIN
 }
 
 add_alias() {
-	read -p 'Domain? ' DOMAIN
-	read -p 'User? ' USER
-	read -p 'Name? ' NAME
+	DOMAIN=$(askValue Domain)
+	USER=$(askValue User)
+	NAME=$(askValue Name)
 	echo 'Recipient list? CTRL+D to finish'
 	while read DEST; do
 		USERS+="\nmaildrop:$DEST"
@@ -26,12 +54,13 @@ add_alias() {
 }
 
 add_email() {
-	read -p 'Domain? ' DOMAIN
-	read -p 'User? ' USER
+	DOMAIN=$(askValue Domain)
+	USER=$(askValue User)
 	OLDMODES=$(stty -g)
 	stty -echo
-	read -p 'Password? ' PASSWORD
+	PASSWORD=$(askValue Password)
 	stty $OLDMODES
+	echo
 
 	USER=$(echo $USER | tr 'A-Z' 'a-z')
 	if [ $(ldapsearch -h ldap -b "ou=people,$DC" -D $CN_ADMIN -w $LDAP_PASSWORD -P 3 -LLL "(mail=$USER)" uid | wc -l) -eq 0 ]; then
@@ -39,6 +68,11 @@ add_email() {
 		replaceValues>/tmp/account.ldif $CONFD/account.ldif DC "$DC" USER "$USER" DOMAIN "$DOMAIN" PASSWORD "$CPW"
 		ldapadd $LDAP_OPTS -f /tmp/account.ldif
 	fi
+}
+
+gen_dkim() {
+	DOMAIN=$(askValue Domain)
+	genDkimImpl $DOMAIN
 }
 
 eval $(basename $0)

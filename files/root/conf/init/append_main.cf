@@ -1,3 +1,4 @@
+
 # SASL Support
 smtpd_sasl_local_domain =
 smtpd_sasl_auth_enable = yes
@@ -15,3 +16,9 @@ smtpd_recipient_restrictions = permit_sasl_authenticated,
  reject_rbl_client bl.spamcop.net,
  reject_rbl_client cbl.abuseat.org,                                                                       
  permit
+
+# DKIM
+milter_protocol = 6
+milter_default_action = accept
+smtpd_milters = inet:127.0.0.1:8891
+non_smtpd_milters = inet:127.0.0.1:8891

@@ -1,8 +1,9 @@
 # sealeo/mail-openldap
 
-**A docker container to manage multidomain emails based on LDAP architecture with our container: [OpenLDAP](https://hub.docker.com/r/sealeo/openldap/)**
-
-[hub]: https://hub.docker.com/r/sealeo/mail-openldap/mail
+Main features:
+* use postfix, dovecot
+* manage multidomain emails
+* connects to an existing LDAP (see: [OpenLDAP](https://hub.docker.com/r/sealeo/openldap/))
 
 Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openldap/) 
 
@@ -12,9 +13,14 @@ Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openl
 
 If you run your container with docker CLI:
 ```bash
-docker run -d -v /home/mail/mailboxes:/vmail -v /home/mail/ssl/smtp.mydomain.com:/ssl/smtp.mydomain.com:ro \
--v /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro -p "25:25" -p "587:587" -p "993:993" -e LDAP_PASSWORD=password \
--e LDAP_DOMAIN=mydomain.com --name mail sealeo/mail-openldap
+docker run -d --name mail \
+ -v /home/mail/mailboxes:/vmail \
+ -v /home/mail/ssl/smtp.mydomain.com:/ssl/smtp.mydomain.com:ro \
+ -v /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro \
+ -p 25:25 -p 587:587 -p 993:993 \
+ --link ldap
+ -e TZ=Etc/UTC -e MAIL_DOMAIN=mydomain.com -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_PASSWORD=password \
+ sealeo/mail-openldap
 ```
 
 Or if you use *docker-compose*
@@ -25,8 +31,8 @@ services:
     image: sealeo/mail-openldap
     volumes:
     - /home/mail/mailboxes:/vmail
-    - /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro
     - /home/mail/ssl/smtp.mydomain.com:/ssl/smtp.mydomain.com:ro
+    - /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro
     ports:
     - "25:25"
     - 587:587
@@ -34,9 +40,10 @@ services:
     external_links:
     - ldap
     environment:
+		- TZ=Etc/UTC
 		- MAIL_DOMAIN=mydomain.com
-    - LDAP_PASSWORD=password
     - LDAP_DOMAIN_BASE=mydomain.com
+    - LDAP_PASSWORD=password
 ```
 
 ## DNS
@@ -52,7 +59,7 @@ xxx.xxx.xxx.xxx is IP address of your mail server.
 
 ## SSL
 
-
+soon described
 
 # Usage
 
@@ -61,7 +68,6 @@ Scripts are available in the container to add a new domain, email address or ali
 ## Add domain
 ```bash
 docker exec -it mail add_domain
-
 Domain? mydomain2.com
 adding new entry "dc=mydomain2.com,dc=mail,dc=mydomain,dc=com"
 

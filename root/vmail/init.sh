@@ -6,6 +6,11 @@ set -eux
 LC_CTYPE=C.UTF-8
 CONFD=/root/conf/init
 
+configTZ() {
+	ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+	echo>/etc/timezone $TZ
+}
+
 configLDAP() {
 	if ! ldapsearch $LDAP_OPTS -b $DC dc=mail | grep -q dc:; then 
 		replaceValues>/root/vmail/mail.ldif $CONFD/mail.ldif DC "$DC"
@@ -142,6 +147,7 @@ EOF
 if [ ! -e /root/vmail/docker_configured ]; then
 	status "configuring docker for first run"
 	chown -R vmail: /vmail
+	configTZ
 	configLDAP
 	configPostfix
 	configAuth

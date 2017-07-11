@@ -25,6 +25,7 @@ RUN apt-get update && apt-get upgrade -y && \
 
 RUN groupadd -g 2000 vmail && useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m vmail
 
+ENV TZ               Etc/UTC
 ENV LDAP_PASSWORD    password
 ENV LDAP_DOMAIN_BASE example.com
 ENV SSL_SMTP_CERT    smtp.cert

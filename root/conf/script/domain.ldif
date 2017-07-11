@@ -1,0 +1,21 @@
+dn:dc=%DOMAIN,dc=mail,%DC
+o: %O
+dc: %DOMAIN
+description: virtualDomain
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+
+dn:dc=mailAccount,dc=%DOMAIN,dc=mail,%DC
+dc: mailAccount
+o: mailAccount
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+
+dn:dc=mailAlias,dc=%DOMAIN,dc=mail,%DC
+dc: mailAlias
+o: mailAlias
+objectClass: top
+objectClass: dcObject
+objectClass: organization

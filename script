@@ -73,7 +73,6 @@ if [ "$(basename $0)" == "add_email" ]; then
 	echo 'Password? '
 	read PASSWORD
 	stty $OLDMODES
->>>>>>> minor changes: typo, indentation
 
 	USER=$(echo $USER | tr 'A-Z' 'a-z')
 	if [ $(ldapsearch -h ldap -b "ou=people,$DC" -D "cn=admin,$DC" -w "$LDAP_PASSWORD" -P 3 -LLL "(mail=$USER)" uid | wc -l ) -eq 0 ]; then

@@ -1,0 +1,9 @@
+server_host = ldap
+server_port = 389
+search_base = dc=mail,%DC
+query_filter = (&(objectClass=CourierMailAlias)(mail=%s))
+result_attribute = maildrop
+bind = yes
+bind_dn = %CN_ADMIN
+bind_pw = %LDAP_PASSWORD
+version = 3

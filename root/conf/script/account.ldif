@@ -1,0 +1,10 @@
+dn:mail=%USER@%DOMAIN,dc=mailaccount,dc=%DOMAIN,dc=mail,%DC
+cn:%USER@%DOMAIN
+sn:%USER
+mail:%USER@%DOMAIN
+mailbox: %DOMAIN/%USER/
+homeDirectory: /vmail/
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: CourierMailAccount
+userPassword: $PASSWORD

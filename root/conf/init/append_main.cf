@@ -1,0 +1,17 @@
+# SASL Support
+smtpd_sasl_local_domain =
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+broken_sasl_auth_clients = yes
+smtpd_recipient_limit = 100
+smtpd_helo_restrictions = reject_invalid_hostname
+smtpd_sender_restrictions = reject_unknown_address
+smtpd_recipient_restrictions = permit_sasl_authenticated,
+ permit_mynetworks,
+ reject_unauth_destination,
+ reject_unknown_sender_domain,
+ reject_unknown_client,
+ reject_rbl_client zen.spamhaus.org,
+ reject_rbl_client bl.spamcop.net,
+ reject_rbl_client cbl.abuseat.org,                                                                       
+ permit

@@ -1,0 +1,44 @@
+#!/bin/bash
+
+source /root/vmail/common
+CONFD=/root/conf/script
+
+add_domain() {
+	read -p 'Domain? ' DOMAIN
+	O=$(echo $DOMAIN|sed -r 's/(.*)\.(.*)/\1\2/')
+	replaceValues>/tmp/domain.ldif $CONFD/domain.ldif "%DOMAIN/$DOMAIN" "%DC/$DC" "%O/$O"
+	ldapadd $LDAP_OPTS -f /tmp/domain.ldif
+}
+
+add_alias() {
+	read -p 'Domain? ' DOMAIN
+	read -p 'User? ' USER
+	read -p 'Name? ' NAME
+	echo 'Recipient list? CTRL+D to finish'
+	while read DEST; do
+		USERS+="\nmaildrop:$DEST"
+	done
+
+	USER=$(echo $USER | tr 'A-Z' 'a-z')
+	USERS=$(echo "$USERS"|tail -n+2)
+	replaceValues>'/tmp/alias.ldif' "$CONFD/alias.ldif" "%USER/$USER" "%DOMAIN/$DOMAIN" "%DC/$DC" "%MAILDROP/$USERS"
+	ldapadd $LDAP_OPTS -f '/tmp/alias.ldif'
+}
+
+add_email() {
+	read -p 'Domain? ' DOMAIN
+	read -p 'User? ' USER
+	OLDMODES=$(stty -g)
+	stty -echo
+	read -p 'Password? ' PASSWORD
+	stty $OLDMODES
+
+	USER=$(echo $USER | tr 'A-Z' 'a-z')
+	if [ $(ldapsearch -h ldap -b "ou=people,$DC" -D $CN_ADMIN -w $LDAP_PASSWORD -P 3 -LLL "(mail=$USER)" uid | wc -l) -eq 0 ]; then
+		CPW=$(slappasswd -s $PASSWORD -h {SSHA})
+		replaceValues>/tmp/account.ldif $CONFD/account.ldif "%USER/$USER" "%DOMAIN/$DOMAIN" "%PASSWORD/$CPW"
+		ldapadd $LDAP_OPTS -f /tmp/account.ldif
+	fi
+}
+
+eval $(basename $0)

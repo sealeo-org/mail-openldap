@@ -1,0 +1,4 @@
+dn: cn=dovecot,%DC
+changetype: modify
+replace: userPassword
+userPassword: %DOVECOT_PASS

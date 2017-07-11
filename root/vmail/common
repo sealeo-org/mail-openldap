@@ -1,0 +1,34 @@
+#!/bin/bash
+
+status() {
+	echo>&2 "---> ${@}"
+}
+
+DC="dc=$(echo $LDAP_DOMAIN_BASE|cut -d'.' -f1),dc=$(echo $LDAP_DOMAIN_BASE|cut -d'.' -f2)"
+CN_ADMIN="cn=admin,$DC"
+LDAP_OPTS="-x -h ldap -D $CN_ADMIN -w $LDAP_PASSWORD"
+
+setValue() {
+  VAR=$(echo $2 | sed 's#\([]\#\%\@\*\$\/&[]\)#\\\1#g')
+  sed -i "s/^#\?\($1[[:space:]]*=\).*$/\1$VAR/" $3
+}
+
+uncomment() { sed -i "$1"' s/^ *#//' "$2"; }
+comment()   { sed -i "$1"' s/^/#/' "$2"; }
+
+genPwd() {
+  date +%s | sha256sum | base64 | head -c 32 ; echo 
+}
+
+replaceValues() { 
+  filename=$1
+  shift
+  ans=$(cat $filename) 
+ 
+  while [ $# -ne 0 ]; do
+    pattern=$1
+    shift
+    ans=$(echo "$ans"|sed "s/$pattern/g")
+  done                                                                                                    
+  echo "$ans"
+} 

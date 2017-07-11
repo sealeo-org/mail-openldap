@@ -25,10 +25,11 @@ replaceValues() {
   shift
   ans=$(cat $filename) 
  
-  while [ $# -ne 0 ]; do
-    pattern=$1
-    shift
-    ans=$(echo "$ans"|sed "s/$pattern/g")
+  while [ $# -gt 1 ]; do
+		from=%"$1"
+		to="$2"
+    shift 2
+    ans=$(echo "$ans"|sed "s$'\001'$from$'\001'$to$'\001'g")
   done                                                                                                    
   echo "$ans"
 } 

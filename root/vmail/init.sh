@@ -8,24 +8,24 @@ CONFD=/root/conf/init
 
 configLDAP() {
 	if ! ldapsearch $LDAP_OPTS -b $DC dc=mail | grep -q dc:; then 
-		replaceValues>/root/vmail/mail.ldif $CONFD/mail.ldif "%DC/$DC"
+		replaceValues>/root/vmail/mail.ldif $CONFD/mail.ldif DC "$DC"
 		ldapadd $LDAP_OPTS -f /root/vmail/mail.ldif
 	fi
 
 	CLEAR_DOVECOT_PASS=$(genPwd)
 	DOVECOT_PASS=$(slappasswd -s $CLEAR_DOVECOT_PASS -h {SSHA})
 	if ! ldapsearch $LDAP_OPTS -b $DC cn=dovecot | grep -q cn:; then
-		replaceValues>/root/vmail/dovecot.ldif $CONFD/dovecot.ldif "%DC/$DC" "%LDAP_DOMAIN_BASE/$LDAP_DOMAIN_BASE" "%DOVECOT_PASS/$DOVECOT_PASS"
+		replaceValues>/root/vmail/dovecot.ldif $CONFD/dovecot.ldif DC "$DC" LDAP_DOMAIN_BASE "$LDAP_DOMAIN_BASE" DOVECOT_PASS "$DOVECOT_PASS"
 		ldapadd $LDAP_OPTS -f /root/vmail/dovecot.ldif
 	else
-		replaceValues>/root/vmail/dovecot.ldif $CONFD/modify_dovecot.ldif "%DC/$DC" "%DOVECOT_PASS/$DOVECOT_PASS"
+		replaceValues>/root/vmail/dovecot.ldif $CONFD/modify_dovecot.ldif DC "$DC" DOVECOT_PASS "$DOVECOT_PASS"
 		ldapmodify $LDAP_OPTS -f /root/vmail/dovecot.ldif
 	fi
 
 	if ! ldapsearch $LDAP_OPTS -b dc=mail,$DC dc=$MAIL_DOMAIN | grep -q dc:; then 
 		TMP=$(mktemp)
 		O=$(echo $MAIL_DOMAIN | sed -r 's/(.*)\.(.*)/\1\2/')
-		replaceValues>$TMP $CONFD/mail_domain.ldif "%MAIL_DOMAIN/$MAIL_DOMAIN" "%DC/$DC" "%O/$O"
+		replaceValues>$TMP $CONFD/mail_domain.ldif MAIL_DOMAIN "$MAIL_DOMAIN" DC "$DC" O "$O"
 		ldapadd $LDAP_OPTS -f $TMP
 	fi
 }
@@ -38,9 +38,9 @@ configPostfix() {
 	sed -r "s/^(smtpd?_tls_?.*)$/#\1/g" $TMP > /etc/postfix/main.cf
 	cat /root/vmail/postfix.main.cf >> /etc/postfix/main.cf
 
-	replaceValues>/etc/postfix/ldap-domains.cf $CONFD/ldap-domains.cf "%DC/$DC" "%CN_ADMIN/$CN_ADMIN" "%LDAP_PASSWORD/$LDAP_PASSWORD"
-	replaceValues>/etc/postfix/ldap-aliases.cf $CONFD/ldap-aliases.cf "%DC/$DC" "%CN_ADMIN/$CN_ADMIN" "%LDAP_PASSWORD/$LDAP_PASSWORD"
-	replaceValues>/etc/postfix/ldap-accounts.cf $CONFD/ldap-accounts.cf "%DC/$DC" "%CN_ADMIN/$CN_ADMIN" "%LDAP_PASSWORD/$LDAP_PASSWORD"
+	replaceValues>/etc/postfix/ldap-domains.cf $CONFD/ldap-domains.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
+	replaceValues>/etc/postfix/ldap-aliases.cf $CONFD/ldap-aliases.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
+	replaceValues>/etc/postfix/ldap-accounts.cf $CONFD/ldap-accounts.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
 }
 
 configAuth() {
@@ -48,7 +48,7 @@ configAuth() {
 	sed -r "s/^(START=)no$/\1yes/" /etc/default/saslauthd > $TMP
 	sed -r "s/^(MECHANISMS=\")pam(\")$/\1ldap\2/" $TMP > /etc/default/saslauthd
 
-	replaceValues>/etc/saslauthd.conf $CONFD/saslauthd.conf "%DC/$DC" "%CN_ADMIN/$CN_ADMIN" "%LDAP_PASSWORD/$LDAP_PASSWORD"
+	replaceValues>/etc/saslauthd.conf $CONFD/saslauthd.conf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
 	cp $CONFD/smtpd.conf /etc/postfix/smtpd.conf
 	cat>>/etc/postfix/main.cf $CONFD/append_main.cf
 

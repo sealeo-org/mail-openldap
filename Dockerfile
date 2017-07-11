@@ -35,6 +35,7 @@ ENV SSL_SMTP_KEY     smtp.key
 ENV SSL_IMAP_CERT    imap.cert
 ENV SSL_IMAP_KEY     imap.key
 ENV MAIL_DOMAIN      exemple.com
+ENV DKIM_KEY_SIZE    2048
 
 COPY ./files /
 

@@ -19,7 +19,9 @@ docker run -d --name mail \
  -v /home/mail/dkim:/etc/opendkim \
  -p 25:25 -p 587:587 -p 993:993 \
  --link ldap
- -e TZ=Etc/UTC -e MAIL_DOMAIN=mydomain.com -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_PASSWORD=password \
+ -e TZ=Etc/UTC -e MAIL_DOMAIN=mydomain.com \
+ -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_PASSWORD=password \
+ -e DKIM_KEY_SIZE=2048 \
  sealeo/mail-openldap
 ```
 
@@ -45,6 +47,7 @@ services:
 		- MAIL_DOMAIN=mydomain.com
     - LDAP_DOMAIN_BASE=mydomain.com
     - LDAP_PASSWORD=password
+		- DKIM_KEY_SIZE=2048
 ```
 
 ## DNS

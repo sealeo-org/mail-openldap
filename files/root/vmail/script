@@ -21,7 +21,7 @@ genDkimImpl() {
 	mkdir -p $KEYDIR
 	(
 		cd $KEYDIR
-		opendkim-genkey -s mail -d $DOMAIN
+		opendkim-genkey -s mail -b $DKIM_KEY_SIZE -d $DOMAIN
 	)
 	chown -R opendkim: $KEYDIR/mail.private
 	echo "*****"

@@ -7,4 +7,4 @@ homeDirectory: /vmail/
 objectClass: top
 objectClass: inetOrgPerson
 objectClass: CourierMailAccount
-userPassword: $PASSWORD
+userPassword: %PASSWORD

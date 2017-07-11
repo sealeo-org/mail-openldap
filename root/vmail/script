@@ -20,9 +20,9 @@ add_alias() {
 	done
 
 	USER=$(echo $USER | tr 'A-Z' 'a-z')
-	USERS=$(echo "$USERS"|tail -n+2)
-	replaceValues>'/tmp/alias.ldif' "$CONFD/alias.ldif" "%USER/$USER" "%DOMAIN/$DOMAIN" "%DC/$DC" "%MAILDROP/$USERS"
-	ldapadd $LDAP_OPTS -f '/tmp/alias.ldif'
+	USERS=$(echo "$USERS"|grep maildrop)
+	replaceValues>/tmp/alias.ldif $CONFD/alias.ldif "%USER/$USER" "%NAME/$NAME" "%DOMAIN/$DOMAIN" "%DC/$DC" "%MAILDROP/$USERS"
+	ldapadd $LDAP_OPTS -f /tmp/alias.ldif
 }
 
 add_email() {
@@ -36,7 +36,7 @@ add_email() {
 	USER=$(echo $USER | tr 'A-Z' 'a-z')
 	if [ $(ldapsearch -h ldap -b "ou=people,$DC" -D $CN_ADMIN -w $LDAP_PASSWORD -P 3 -LLL "(mail=$USER)" uid | wc -l) -eq 0 ]; then
 		CPW=$(slappasswd -s $PASSWORD -h {SSHA})
-		replaceValues>/tmp/account.ldif $CONFD/account.ldif "%USER/$USER" "%DOMAIN/$DOMAIN" "%PASSWORD/$CPW"
+		replaceValues>/tmp/account.ldif $CONFD/account.ldif "%DC/$DC" "%USER/$USER" "%DOMAIN/$DOMAIN" "%PASSWORD/$CPW"
 		ldapadd $LDAP_OPTS -f /tmp/account.ldif
 	fi
 }

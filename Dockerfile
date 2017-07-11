@@ -23,8 +23,7 @@ RUN apt-get update && apt-get upgrade -y && \
 	wget \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -g 2000 vmail
-RUN useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m vmail
+RUN groupadd -g 2000 vmail && useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m vmail
 
 ENV LDAP_PASSWORD    password
 ENV LDAP_DOMAIN_BASE example.com
@@ -34,9 +33,9 @@ ENV SSL_IMAP_CERT    imap.cert
 ENV SSL_IMAP_KEY     imap.key
 ENV MAIL_DOMAIN      exemple.com
 
-ADD ./supervisord.conf /etc/supervisord.conf
-ADD ./root /root
-ADD ./slapd /
+COPY ./supervisord.conf /etc/supervisord.conf
+COPY ./root /root
+COPY ./slapd /
 
 RUN ln -s /root/vmail/script /usr/local/bin/add_domain
 RUN ln -s /root/vmail/script /usr/local/bin/add_alias

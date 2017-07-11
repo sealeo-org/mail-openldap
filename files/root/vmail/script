@@ -12,12 +12,12 @@ askValue() {
 
 genDkimImpl() {
 	DOMAIN=$1
+	KEYDIR=$DKIMDIR/keys/$DOMAIN
 
 	echo>>$DKIMDIR/trustedhosts "*.$DOMAIN"
-	echo>>$DKIMDIR/keytable     "mail._domainkey.$DOMAIN $DOMAIN:mail:$DKIMDIR/$DOMAIN/mail.private"
+	echo>>$DKIMDIR/keytable     "mail._domainkey.$DOMAIN $DOMAIN:mail:$KEYDIR/mail.private"
 	echo>>$DKIMDIR/signingtable "*@$DOMAIN mail._domainkey.$DOMAIN"
 
-	KEYDIR=$DKIMDIR/keys/$DOMAIN
 	mkdir -p $KEYDIR
 	(
 		cd $KEYDIR
@@ -27,6 +27,9 @@ genDkimImpl() {
 	echo "*****"
 	cat $KEYDIR/mail.txt
 	echo "*****"
+
+	/etc/init.d/opendkim stop; pkill opendkim
+	/etc/init.d/opendkim start
 }
 
 add_domain() {

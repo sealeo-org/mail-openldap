@@ -148,12 +148,12 @@ configDKIM() {
 	DKIMDIR=/etc/opendkim
 	mkdir -p $DKIMDIR/keys
 	[ ! -e $DKIMDIR/keytable ]     && echo>$DKIMDIR/keytable -n
-	[ ! -e $DKIMDIR/signingtable ] && echo>$DKIMDIR/keytable -n
+	[ ! -e $DKIMDIR/signingtable ] && echo>$DKIMDIR/signingtable -n
 	[ ! -e $DKIMDIR/trustedosts ]  && echo>$DKIMDIR/trustedhosts 127.0.0.1 localhost
 }
 
 # ensure correct writing into configuration files
-/etc/init.d/opendkim stop
+/etc/init.d/opendkim stop; pkill opendkim
 /etc/init.d/dovecot stop
 postfix stop # avoid an issue with postfix start
 /etc/init.d/saslauthd stop

@@ -4,7 +4,6 @@ Main features:
 * use postfix, dovecot
 * manage multidomain emails
 * connects to an existing LDAP (see: [OpenLDAP](https://hub.docker.com/r/sealeo/openldap/))
-* RoundCube Webmail
 
 Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openldap/) 
 
@@ -28,15 +27,6 @@ Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openl
 - LDAP_PASSWORD: the password for LDAP
 - DKIM_KEY_SIZE: DKIM key size in bits
 
-#### For RoundCube Webmail
-- RC_ENABLED: any non-empty value to enable the webmail
-- RC_NAME: the display name of the webmail
-- RC_SUPPORT_URL: the URL displayed when support is required
-- RC_DB_HOST: the URL of the database server
-- RC_DATABASE: the database name
-- RC_DB_USER: the roundcube user (must have permissions on the database)
-- RC_DB_PASSWORD: the roundcube password corresponding to the user
-
 ### Examples
 #### Docker CLI
 ```bash
@@ -45,12 +35,11 @@ docker run -d --name mail \
  -v /home/mail/ssl/smtp.mydomain.com:/ssl/smtp.mydomain.com:ro \
  -v /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro \
  -v /home/mail/dkim:/etc/opendkim \
- -p 25:25 -p 80:80 -p 587:587 -p 993:993 \
- --link ldap --link db
+ -p 25:25 -p 587:587 -p 993:993 \
+ --link ldap
  -e TZ=Etc/UTC -e MAIL_DOMAIN=mydomain.com \
  -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_PASSWORD=password \
  -e DKIM_KEY_SIZE=2048 \
- -e RC_ENABLED=1 RC_DB_HOST=db -e RC_DB_PASSWORD=password \
  sealeo/mail-openldap
 ```
 
@@ -67,21 +56,16 @@ services:
 		- /home/mail/dkim:/etc/opendkim
     ports:
     - "25:25"
-		- 80:80
     - 587:587
     - 993:993
     external_links:
     - ldap
-		- db
     environment:
 		- TZ=Etc/UTC
 		- MAIL_DOMAIN=mydomain.com
     - LDAP_DOMAIN_BASE=mydomain.com
     - LDAP_PASSWORD=password
 		- DKIM_KEY_SIZE=2048
-		- RC_ENABLED=1
-		- RC_DB_HOST=db
-		- RC_DB_PASSWORD=password
 ```
 
 ## DNS

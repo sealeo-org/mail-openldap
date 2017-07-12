@@ -47,6 +47,7 @@ ENV MAIL_DOMAIN      exemple.com
 ENV DKIM_KEY_SIZE    2048
 
 # Webmail (Roundcube)
+ENV RC_ENABLED       ""
 ENV RC_NAME          "Roundcube Webmail"
 ENV RC_SUPPORT_URL   ""
 ENV RC_DB_HOST       localhost

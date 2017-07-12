@@ -155,23 +155,26 @@ configDKIM() {
 }
 
 configWebmail() {
+	[ -z "$RC_ENABLED" ] && return
 	RCMDIR=/opt/roundcubemail
-	SQL_OPTS="-h $RC_DB_HOST -u $RC_DB_USER --password='$RC_DB_PASSWORD' $RC_DATABASE"
-	if [ $(mysql $SQL_OPTS<<<'show tables;'|tail -n+2|wc -l) -eq 0 ]; then
-		mysql $SQL_OPTS < $RCMDIR/SQL/mysql.initial.sql
+	PW=$RC_DB_PASSWORD
+	SQL_OPTS="-h $RC_DB_HOST -u $RC_DB_USER $RC_DATABASE"
+	if [ $(mysql --password="$PW" $SQL_OPTS<<<'show tables;'|tail -n+2|wc -l) -eq 0 ]; then
+		mysql --password="$PW" $SQL_OPTS < $RCMDIR/SQL/mysql.initial.sql
 	fi
-	replaceValues>$RCMDIR/config/config.inc.php $CONFD/roundcubemail.config.inc.php DB_USER \
-		"$RC_DB_USER" DB_PASSWORD "$RC_DB_PASSWORD" DB_HOST "$RC_DB_HOST" DB "$RC_DATABASE" \
-		SUPPORT_URL "$RC_SUPPORT_URL" PRODUCT_NAME "$PRODUCT_NAME"
+	replaceValues>$RCMDIR/config/config.inc.php $CONFD/roundcubemail.config.inc.php \
+		DB_USER "$RC_DB_USER" DB_PASSWORD "$RC_DB_PASSWORD" DB_HOST "$RC_DB_HOST" \
+		DB "$RC_DATABASE" SUPPORT_URL "$RC_SUPPORT_URL" PRODUCT_NAME "$RC_NAME"
 
 	(
 		cd $RCMDIR
-		rm UPGRADING README.md
-		rm -r SQL installer
+		rm -f INSTALL UPGRADING README.md
+		rm -rf SQL installer
 		chown -R www-data: temp logs
 	)
 
 	cat>/etc/nginx/sites-enabled/default $CONFD/nginx.default
+	echo>/usr/share/mail-openldap/webmail_configured
 }
 
 # ensure correct writing into configuration files
@@ -192,15 +195,19 @@ if [ ! -e /usr/share/mail-openldap/docker_configured ]; then
 	configIMAP
 	configSSL
 	configDKIM
-	configWebmail
 	touch /usr/share/mail-openldap/docker_configured
 else
 	status "found already-configured docker"
 fi
 
+[ ! -e /usr/share/mail-openldap/webmail_configured ] && configWebmail
+
 /etc/init.d/saslauthd start
 /etc/init.d/postfix start
 /etc/init.d/dovecot start 
 /etc/init.d/opendkim start
-/etc/init.d/php5-fpm start
-/etc/init.d/nginx start
+
+if [ ! -z "$RC_ENABLED" ]; then
+	/etc/init.d/php5-fpm start
+	/etc/init.d/nginx start
+fi

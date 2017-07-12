@@ -29,6 +29,7 @@ Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openl
 - DKIM_KEY_SIZE: DKIM key size in bits
 
 #### For RoundCube Webmail
+- RC_ENABLED: any non-empty value to enable the webmail
 - RC_NAME: the display name of the webmail
 - RC_SUPPORT_URL: the URL displayed when support is required
 - RC_DB_HOST: the URL of the database server
@@ -49,7 +50,7 @@ docker run -d --name mail \
  -e TZ=Etc/UTC -e MAIL_DOMAIN=mydomain.com \
  -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_PASSWORD=password \
  -e DKIM_KEY_SIZE=2048 \
- -e RC_DB_HOST=db -e RC_DB_PASSWORD=password \
+ -e RC_ENABLED=1 RC_DB_HOST=db -e RC_DB_PASSWORD=password \
  sealeo/mail-openldap
 ```
 
@@ -78,6 +79,7 @@ services:
     - LDAP_DOMAIN_BASE=mydomain.com
     - LDAP_PASSWORD=password
 		- DKIM_KEY_SIZE=2048
+		- RC_ENABLED=1
 		- RC_DB_HOST=db
 		- RC_DB_PASSWORD=password
 ```

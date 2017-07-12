@@ -4,28 +4,56 @@ Main features:
 * use postfix, dovecot
 * manage multidomain emails
 * connects to an existing LDAP (see: [OpenLDAP](https://hub.docker.com/r/sealeo/openldap/))
+* RoundCube Webmail
 
 Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openldap/) 
 
 # Installation
 ## Docker
 
-### Docker CLI
+### Mountpoints
+- /vmail: all mailboxes
+- /ssl/...: the SSL certificates for SMTP and IMAP (see SSL section)
+- /etc/opendkim: storage for opendkim keys
+
+### Ports
+- 25 and 587 are for SMTP
+- 993 is for IMAP
+- 80 (optional) is for the Webmail
+
+### Environment variables
+- TZ: the timezone
+- MAIL_DOMAIN: the domain of the mail server
+- LDAP_DOMAIN_BASE: the URL to access the LDAP
+- LDAP_PASSWORD: the password for LDAP
+- DKIM_KEY_SIZE: DKIM key size in bits
+
+#### For RoundCube Webmail
+- RC_NAME: the display name of the webmail
+- RC_SUPPORT_URL: the URL displayed when support is required
+- RC_DB_HOST: the URL of the database server
+- RC_DATABASE: the database name
+- RC_DB_USER: the roundcube user (must have permissions on the database)
+- RC_DB_PASSWORD: the roundcube password corresponding to the user
+
+### Examples
+#### Docker CLI
 ```bash
 docker run -d --name mail \
  -v /home/mail/mailboxes:/vmail \
  -v /home/mail/ssl/smtp.mydomain.com:/ssl/smtp.mydomain.com:ro \
  -v /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro \
  -v /home/mail/dkim:/etc/opendkim \
- -p 25:25 -p 587:587 -p 993:993 \
- --link ldap
+ -p 25:25 -p 80:80 -p 587:587 -p 993:993 \
+ --link ldap --link db
  -e TZ=Etc/UTC -e MAIL_DOMAIN=mydomain.com \
  -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_PASSWORD=password \
  -e DKIM_KEY_SIZE=2048 \
+ -e RC_DB_HOST=db -e RC_DB_PASSWORD=password \
  sealeo/mail-openldap
 ```
 
-### docker-compose.yml
+#### docker-compose.yml
 ```yaml
 version: '3'
 services:
@@ -38,16 +66,20 @@ services:
 		- /home/mail/dkim:/etc/opendkim
     ports:
     - "25:25"
+		- 80:80
     - 587:587
     - 993:993
     external_links:
     - ldap
+		- db
     environment:
 		- TZ=Etc/UTC
 		- MAIL_DOMAIN=mydomain.com
     - LDAP_DOMAIN_BASE=mydomain.com
     - LDAP_PASSWORD=password
 		- DKIM_KEY_SIZE=2048
+		- RC_DB_HOST=db
+		- RC_DB_PASSWORD=password
 ```
 
 ## DNS

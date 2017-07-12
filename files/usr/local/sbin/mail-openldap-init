@@ -154,7 +154,29 @@ configDKIM() {
 	[ ! -e $DKIMDIR/trustedosts ]  && echo>$DKIMDIR/trustedhosts 127.0.0.1 localhost
 }
 
+configWebmail() {
+	RCMDIR=/opt/roundcubemail
+	SQL_OPTS="-h $RC_DB_HOST -u $RC_DB_USER --password='$RC_DB_PASSWORD' $RC_DATABASE"
+	if [ $(mysql $SQL_OPTS<<<'show tables;'|tail -n+2|wc -l) -eq 0 ]; then
+		mysql $SQL_OPTS < $RCMDIR/SQL/mysql.initial.sql
+	fi
+	replaceValues>$RCMDIR/config/config.inc.php $CONFD/roundcubemail.config.inc.php DB_USER \
+		"$RC_DB_USER" DB_PASSWORD "$RC_DB_PASSWORD" DB_HOST "$RC_DB_HOST" DB "$RC_DATABASE" \
+		SUPPORT_URL "$RC_SUPPORT_URL" PRODUCT_NAME "$PRODUCT_NAME"
+
+	(
+		cd $RCMDIR
+		rm UPGRADING README.md
+		rm -r SQL installer
+		chown -R www-data: temp logs
+	)
+
+	cat>/etc/nginx/sites-enabled/default $CONFD/nginx.default
+}
+
 # ensure correct writing into configuration files
+/etc/init.d/php5-fpm stop
+/etc/init.d/nginx stop
 /etc/init.d/opendkim stop; pkill opendkim||:
 /etc/init.d/dovecot stop
 postfix stop # avoid an issue with postfix start
@@ -170,6 +192,7 @@ if [ ! -e /usr/share/mail-openldap/docker_configured ]; then
 	configIMAP
 	configSSL
 	configDKIM
+	configWebmail
 	touch /usr/share/mail-openldap/docker_configured
 else
 	status "found already-configured docker"
@@ -179,3 +202,5 @@ fi
 /etc/init.d/postfix start
 /etc/init.d/dovecot start 
 /etc/init.d/opendkim start
+/etc/init.d/php5-fpm start
+/etc/init.d/nginx start

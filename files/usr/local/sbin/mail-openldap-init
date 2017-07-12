@@ -13,18 +13,21 @@ configTZ() {
 
 configLDAP() {
 	if ! ldapsearch $LDAP_OPTS -b $DC dc=mail | grep -q dc:; then 
-		replaceValues>/root/vmail/mail.ldif $CONFD/mail.ldif DC "$DC"
-		ldapadd $LDAP_OPTS -f /root/vmail/mail.ldif
+		TMP=$(mktemp)
+		replaceValues>$TMP $CONFD/mail.ldif DC "$DC"
+		ldapadd $LDAP_OPTS -f $TMP
 	fi
 
 	CLEAR_DOVECOT_PASS=$(genPwd)
 	DOVECOT_PASS=$(slappasswd -s $CLEAR_DOVECOT_PASS -h {SSHA})
+
+	TMP=$(mktemp)
 	if ! ldapsearch $LDAP_OPTS -b $DC cn=dovecot | grep -q cn:; then
-		replaceValues>/root/vmail/dovecot.ldif $CONFD/dovecot.ldif DC "$DC" LDAP_DOMAIN_BASE "$LDAP_DOMAIN_BASE" DOVECOT_PASS "$DOVECOT_PASS"
-		ldapadd $LDAP_OPTS -f /root/vmail/dovecot.ldif
+		replaceValues>$TMP $CONFD/dovecot.ldif DC "$DC" LDAP_DOMAIN_BASE "$LDAP_DOMAIN_BASE" DOVECOT_PASS "$DOVECOT_PASS"
+		ldapadd $LDAP_OPTS -f $TMP
 	else
-		replaceValues>/root/vmail/dovecot.ldif $CONFD/modify_dovecot.ldif DC "$DC" DOVECOT_PASS "$DOVECOT_PASS"
-		ldapmodify $LDAP_OPTS -f /root/vmail/dovecot.ldif
+		replaceValues>$TMP $CONFD/modify_dovecot.ldif DC "$DC" DOVECOT_PASS "$DOVECOT_PASS"
+		ldapmodify $LDAP_OPTS -f $TMP
 	fi
 
 	if ! ldapsearch $LDAP_OPTS -b dc=mail,$DC dc=$MAIL_DOMAIN | grep -q dc:; then 
@@ -157,7 +160,7 @@ configDKIM() {
 postfix stop # avoid an issue with postfix start
 /etc/init.d/saslauthd stop
 
-if [ ! -e /root/vmail/docker_configured ]; then
+if [ ! -e /usr/share/mail-openldap/docker_configured ]; then
 	status "configuring docker for first run"
 	chown -R vmail: /vmail
 	configTZ
@@ -167,7 +170,7 @@ if [ ! -e /root/vmail/docker_configured ]; then
 	configIMAP
 	configSSL
 	configDKIM
-	touch /root/vmail/docker_configured
+	touch /usr/share/mail-openldap/docker_configured
 else
 	status "found already-configured docker"
 fi

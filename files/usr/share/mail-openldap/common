@@ -29,8 +29,8 @@ replaceValues() {
   ans=$(cat $filename) 
  
   while [ $# -gt 1 ]; do
-		from=%"$1"
-		to="$2"
+		from="%$1"
+		to=$(echo $2|sed 's/&/\\\&/g')
     shift 2
     ans=$(echo "$ans"|sed "s${delim}$from${delim}$to${delim}g")
   done                                                                                                    

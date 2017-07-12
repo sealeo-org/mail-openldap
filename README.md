@@ -119,7 +119,48 @@ _dmarc IN TXT "v=DMARC1; p=none"
 ```
 
 ## SSL
-soon described
+You need to provide SSL certificates for SMTPS and IMAPS in `/ssl`, in directories `smtp.mydomain.com` and `imap.mydomain.com` respectively.
+Minimal files are `fullchain.pem` and `privkey.pem`. Any other file will be ignored.
+You must ensure that these certificates are up to date.
+
+Examples below are with Let's Encrypt but they must be easy to adapt to anything.
+Note: this configuration is to be done on the **host**
+
+### First installation
+if you have any service listening on port 80: (example: nginx)
+```bash
+certbot certonly --pre-hook 'systemctl stop nginx' --post-hook 'systemctl start nginx' --standalone --agree-tos --rsa-key-size 4096 -d smtp.mydomain.com
+certbot certonly --pre-hook 'systemctl stop nginx' --post-hook 'systemctl start nginx' --standalone --agree-tos --rsa-key-size 4096 -d imap.mydomain.com
+```
+**else**
+```bash
+certbot certonly --standalone --agree-tos --rsa-key-size 4096 -d smtp.mydomain.com
+certbot certonly --standalone --agree-tos --rsa-key-size 4096 -d imap.mydomain.com
+```
+
+You now have certificates in `/etc/letsencrypt/live/`
+To copy these for the container, you can run the two lines below.
+Note: `/container/ssl` must be replaced by the mountpoint corresponding to inner `/ssl`
+```bash
+cp -TLrf /etc/letsencrypt/live/smtp.mydomain.com /container/ssl/smtp.mydomain.com
+cp -TLrf /etc/letsencrypt/live/imap.mydomain.com /container/ssl/imap.mydomain.com
+```
+### Keep certificates up to date
+This section will describe a way to keep easily up to date the certificates
+
+#### Requirements
+```bash
+apt update
+apt install -y incron
+```
+
+#### Setup
+```bash
+cat>/etc/incron.d/certs.mail.mydomain.com<<EOF
+/etc/letsencrypt/live/smtp.mydomain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/smtp.mydomain.com /data/containers/email/ssl/smtp.mydomain.com
+/etc/letsencrypt/live/imap.mydomain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/imap.mydomain.com /data/containers/email/ssl/imap.mydomain.com
+EOF
+```
 
 # Usage
 Scripts are available in the container to add a new domain, email address or alias

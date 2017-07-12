@@ -56,7 +56,7 @@ ENV RC_DB_USER       roundcube
 ENV RC_DB_PASSWORD   password
 
 COPY ./files /
-ADD  roundcube.tar /opt
+ADD  roundcubemail.tar /opt
 
 RUN LC_CTYPE=C.UTF-8
 

@@ -125,3 +125,16 @@ docker exec -it mail gen_dkim
 Domain? mydomain.com
 ```
 See **Add domain**
+
+# Possible issues
+
+## Not receiving e-mails from a specific client
+If you do not receive e-mails from a specific client, like e.g. gmail.com, check your logs (`/var/log/mail.info`) and see if something like
+```
+450 4.7.1 Client host rejected: cannot find your hostname, [IP]
+```
+occurs. If so, you probably need to fix your inner `/etc/resolv.conf`
+After that, you will need to restart postfix:
+```bash
+postfix stop; /etc/init.d/postfix start
+```

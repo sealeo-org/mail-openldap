@@ -1,4 +1,19 @@
 
+## Appended configuration
+
+# List of available domains
+virtual_mailbox_domains = ldap:/etc/postfix/ldap-domains.cf
+# Mailbox storage
+virtual_mailbox_base = /vmail
+# Link between email address and mailbox
+virtual_mailbox_maps = ldap:/etc/postfix/ldap-accounts.cf
+# Link between virtual address and real user
+virtual_minimum_uid = 100
+virtual_gid_maps = static:2000
+virtual_uid_maps = static:2000
+# Link between alias address and email address
+virtual_alias_maps = ldap:/etc/postfix/ldap-aliases.cf
+
 # SASL Support
 smtpd_sasl_local_domain =
 smtpd_sasl_auth_enable = yes
@@ -11,7 +26,7 @@ smtpd_recipient_restrictions = permit_sasl_authenticated,
  permit_mynetworks,
  reject_unauth_destination,
  reject_unknown_sender_domain,
- reject_unknown_client,
+ reject_unknown_reverse_client_hostname,
  reject_rbl_client zen.spamhaus.org,
  reject_rbl_client bl.spamcop.net,
  reject_rbl_client cbl.abuseat.org,                                                                       

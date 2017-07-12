@@ -1,10 +1,10 @@
 #!/bin/bash
 
-source /root/vmail/common
+source /usr/share/mail-openldap/common
 
 set -eux
 LC_CTYPE=C.UTF-8
-CONFD=/root/conf/init
+CONFD=$BASE_CONFD/init
 
 configTZ() {
 	ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
@@ -41,7 +41,6 @@ configPostfix() {
 	sed -r "s/^(smtpd_banner = ).*$/\1smtp.$MAIL_DOMAIN ESMTP Server ready/" /etc/postfix/main.cf > $TMP 
 	TMP2=$(mktemp)
 	sed -r "s/^(smtpd?_tls_?.*)$/#\1/g" $TMP > /etc/postfix/main.cf
-	cat /root/vmail/postfix.main.cf >> /etc/postfix/main.cf
 
 	replaceValues>/etc/postfix/ldap-domains.cf $CONFD/ldap-domains.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
 	replaceValues>/etc/postfix/ldap-aliases.cf $CONFD/ldap-aliases.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"

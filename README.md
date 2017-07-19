@@ -18,7 +18,6 @@ Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openl
 ### Ports
 - 25 and 587 are for SMTP
 - 993 is for IMAP
-- 80 (optional) is for the Webmail
 
 ### Environment variables
 - TZ: the timezone
@@ -32,12 +31,12 @@ Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openl
 ```bash
 docker run -d --name mail \
  -v /home/mail/mailboxes:/vmail \
- -v /home/mail/ssl/smtp.mydomain.com:/ssl/smtp.mydomain.com:ro \
- -v /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro \
+ -v /home/mail/ssl/smtp.domain.com:/ssl/smtp.domain.com:ro \
+ -v /home/mail/ssl/imap.domain.com:/ssl/imap.domain.com:ro \
  -v /home/mail/dkim:/etc/opendkim \
  -p 25:25 -p 587:587 -p 993:993 \
  --link ldap
- -e TZ=Etc/UTC -e MAIL_DOMAIN=mydomain.com \
+ -e TZ=Etc/UTC -e MAIL_DOMAIN=domain.com \
  -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_PASSWORD=password \
  -e DKIM_KEY_SIZE=2048 \
  sealeo/mail-openldap
@@ -51,8 +50,8 @@ services:
     image: sealeo/mail-openldap
     volumes:
     - /home/mail/mailboxes:/vmail
-    - /home/mail/ssl/smtp.mydomain.com:/ssl/smtp.mydomain.com:ro
-    - /home/mail/ssl/imap.mydomain.com:/ssl/imap.mydomain.com:ro
+    - /home/mail/ssl/smtp.domain.com:/ssl/smtp.domain.com:ro
+    - /home/mail/ssl/imap.domain.com:/ssl/imap.domain.com:ro
 		- /home/mail/dkim:/etc/opendkim
     ports:
     - "25:25"
@@ -62,20 +61,20 @@ services:
     - ldap
     environment:
 		- TZ=Etc/UTC
-		- MAIL_DOMAIN=mydomain.com
-    - LDAP_DOMAIN_BASE=mydomain.com
+		- MAIL_DOMAIN=domain.com
+    - LDAP_DOMAIN_BASE=domain.com
     - LDAP_PASSWORD=password
 		- DKIM_KEY_SIZE=2048
 ```
 
 ## DNS
-### Minimal configuration
-Minimal DNS zone configuration for the `MAIL_DOMAIN` (e.g. *mydomain.com* as above)
+### Minimal configuration for main domain
+Minimal DNS zone configuration for the `MAIL_DOMAIN` (e.g. *domain.com* as above)
 ```
 smtp 300 IN A x.x.x.x
 imap 300 IN A x.x.x.x
 mail 10800 IN A x.x.x.x
-@ 10800 IN MX 10 mail.mydomain.com.
+@ 10800 IN MX 10 mail.domain.com.
 ```
 x.x.x.x is the IP address of your mail server.
 
@@ -86,7 +85,7 @@ See: [SPF Wizard](https://www.spfwizard.net/)
 
 Example of possible configuration:
 ```
-mydomain.com. IN TXT "v=spf1 mx a ptr ip4:x.x.x.x ~all"
+domain.com. IN TXT "v=spf1 mx a ptr ip4:x.x.x.x ~all"
 ```
 x.x.x.x is the IP address of your mail server.
 
@@ -102,8 +101,14 @@ Example of possible configuration:
 _dmarc IN TXT "v=DMARC1; p=none"
 ```
 
+#### Automatic parameters for Thunderbird
+```
+autoconfig IN A x.x.x.x
+```
+and you must have a running webserver on *autoconfig.domain.com* which serves the content of `https://github.com/sealeo-org/mail-openldap/tree/master/etc/autoconfig.domain.com` (you must adapt the `mail/config-v1.1.xml` content to match your configuration)
+
 ## SSL
-You need to provide SSL certificates for SMTPS and IMAPS in `/ssl`, in directories `smtp.mydomain.com` and `imap.mydomain.com` respectively.
+You need to provide SSL certificates for SMTPS and IMAPS in `/ssl`, in directories `smtp.domain.com` and `imap.domain.com` respectively.
 Minimal files are `fullchain.pem` and `privkey.pem`. Any other file will be ignored.
 You must ensure that these certificates are up to date.
 
@@ -113,21 +118,21 @@ Note: this configuration is to be done on the **host**
 ### First installation
 if you have any service listening on port 80: (example: nginx)
 ```bash
-certbot certonly --pre-hook 'systemctl stop nginx' --post-hook 'systemctl start nginx' --standalone --agree-tos --rsa-key-size 4096 -d smtp.mydomain.com
-certbot certonly --pre-hook 'systemctl stop nginx' --post-hook 'systemctl start nginx' --standalone --agree-tos --rsa-key-size 4096 -d imap.mydomain.com
+certbot certonly --pre-hook 'systemctl stop nginx' --post-hook 'systemctl start nginx' --standalone --agree-tos --rsa-key-size 4096 -d smtp.domain.com
+certbot certonly --pre-hook 'systemctl stop nginx' --post-hook 'systemctl start nginx' --standalone --agree-tos --rsa-key-size 4096 -d imap.domain.com
 ```
 **else**
 ```bash
-certbot certonly --standalone --agree-tos --rsa-key-size 4096 -d smtp.mydomain.com
-certbot certonly --standalone --agree-tos --rsa-key-size 4096 -d imap.mydomain.com
+certbot certonly --standalone --agree-tos --rsa-key-size 4096 -d smtp.domain.com
+certbot certonly --standalone --agree-tos --rsa-key-size 4096 -d imap.domain.com
 ```
 
 You now have certificates in `/etc/letsencrypt/live/`
 To copy these for the container, you can run the two lines below.
 Note: `/container/ssl` must be replaced by the mountpoint corresponding to inner `/ssl`
 ```bash
-cp -TLrf /etc/letsencrypt/live/smtp.mydomain.com /container/ssl/smtp.mydomain.com
-cp -TLrf /etc/letsencrypt/live/imap.mydomain.com /container/ssl/imap.mydomain.com
+cp -TLrf /etc/letsencrypt/live/smtp.domain.com /container/ssl/smtp.domain.com
+cp -TLrf /etc/letsencrypt/live/imap.domain.com /container/ssl/imap.domain.com
 ```
 ### Keep certificates up to date
 This section will describe a way to keep easily up to date the certificates
@@ -140,9 +145,9 @@ apt install -y incron
 
 #### Setup
 ```bash
-cat>/etc/incron.d/certs.mail.mydomain.com<<EOF
-/etc/letsencrypt/live/smtp.mydomain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/smtp.mydomain.com /data/containers/email/ssl/smtp.mydomain.com
-/etc/letsencrypt/live/imap.mydomain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/imap.mydomain.com /data/containers/email/ssl/imap.mydomain.com
+cat>/etc/incron.d/certs.mail.domain.com<<EOF
+/etc/letsencrypt/live/smtp.domain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/smtp.domain.com /data/containers/email/ssl/smtp.domain.com
+/etc/letsencrypt/live/imap.domain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/imap.domain.com /data/containers/email/ssl/imap.domain.com
 EOF
 ```
 
@@ -161,19 +166,19 @@ You will find it in you `/home/mail/dkim/keys/mydomain2.com/mail.txt` also, if y
 ## Add alias
 ```bash
 docker exec -it mail add_alias
-Domain? mydomain.com
+Domain? domain.com
 User? admins
 Name? Administrator list
 
 Recipient list? CTRL+D to finish
-alice@mydomain.com
-bob@mydomain.com
+alice@domain.com
+bob@domain.com
 ```
 
 ## Add email
 ```bash
 docker exec -it mail add_email
-Domain? mydomain.com
+Domain? domain.com
 User? bob
 Password?
 ```
@@ -181,6 +186,6 @@ Password?
 ## (Re)generate DKIM for a domain
 ```bash
 docker exec -it mail gen_dkim
-Domain? mydomain.com
+Domain? domain.com
 ```
 See **Add domain**

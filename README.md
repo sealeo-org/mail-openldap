@@ -78,6 +78,16 @@ mail 10800 IN A x.x.x.x
 ```
 x.x.x.x is the IP address of your mail server.
 
+### Configurations for other domains
+```
+@ 10800 IN MX 10 mail.domain.com.
+autoconfig IN CNAME autoconfig.domain.com
+```
+where *domain.com* is the **main** domain.
+the *autoconfig* line is for Thunderbird (see section below)
+
+You will also need to configure each new domain for SPF, DKIM, ... (see below)
+
 ### More advanced configuration
 #### SPF
 See: [SPF on Wikipedia](https://en.wikipedia.org/wiki/Sender_Policy_Framework)

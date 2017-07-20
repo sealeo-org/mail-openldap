@@ -10,8 +10,8 @@ askValue() {
 	echo $value
 }
 
-genDkimImpl() {
-	DOMAIN=$1
+gen_dkim() {
+	DOMAIN=${1:-$(askValue Domain)}
 	KEYDIR=$DKIMDIR/keys/$DOMAIN
 
 	echo>>$DKIMDIR/trustedhosts "*.$DOMAIN"
@@ -33,18 +33,18 @@ genDkimImpl() {
 }
 
 add_domain() {
-	DOMAIN=$(askValue Domain)
+	DOMAIN=${1:-$(askValue Domain)}
 	LDIF=$(mktemp)
 	O=$(echo $DOMAIN|sed -r 's/(.*)\.(.*)/\1\2/')
 	replaceValues>$LDIF $CONFD/domain.ldif DOMAIN "$DOMAIN" DC "$DC" O "$O"
 	ldapadd $LDAP_OPTS -f $LDIF
-	genDkimImpl $DOMAIN
+	gen_dkim $DOMAIN
 }
 
 add_alias() {
-	DOMAIN=$(askValue Domain)
-	USER=$(askValue User)
-	NAME=$(askValue Name)
+	DOMAIN=${1:-$(askValue Domain)}
+	USER=${2:-$(askValue User)}
+	NAME=${3:-$(askValue Name)}
 	echo 'Recipient list? CTRL+D to finish'
 	while read DEST; do
 		USERS+="\nmaildrop:$DEST"
@@ -57,11 +57,11 @@ add_alias() {
 }
 
 add_email() {
-	DOMAIN=$(askValue Domain)
-	USER=$(askValue User)
+	DOMAIN=${1:-$(askValue Domain)}
+	USER=${2:-$(askValue User)}
 	OLDMODES=$(stty -g)
 	stty -echo
-	PASSWORD=$(askValue Password)
+	PASSWORD=${3:-$(askValue Password)}
 	stty $OLDMODES
 	echo
 
@@ -73,9 +73,4 @@ add_email() {
 	fi
 }
 
-gen_dkim() {
-	DOMAIN=$(askValue Domain)
-	genDkimImpl $DOMAIN
-}
-
-eval $(basename $0)
+eval $(basename $0) $@

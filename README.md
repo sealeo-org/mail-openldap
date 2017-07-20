@@ -172,6 +172,7 @@ Domain? mydomain2.com
 
 It will eventually show the required additional DNS zone configuration to enable DKIM for the new domain.
 You will find it in you `/home/mail/dkim/keys/mydomain2.com/mail.txt` also, if you mounted like described above.
+Note: your main domain DKIM key is automatically generated at container boot if non-existant.
 
 ## Add alias
 ```bash

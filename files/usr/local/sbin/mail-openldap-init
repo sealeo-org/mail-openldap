@@ -152,6 +152,8 @@ configDKIM() {
 	[ ! -e $DKIMDIR/keytable ]     && echo>$DKIMDIR/keytable -n
 	[ ! -e $DKIMDIR/signingtable ] && echo>$DKIMDIR/signingtable -n
 	[ ! -e $DKIMDIR/trustedosts ]  && echo>$DKIMDIR/trustedhosts 127.0.0.1 localhost
+
+	[ ! -e $DKIMDIR/keys/$MAIL_DOMAIN ] && gen_dkim $MAIL_DOMAIN
 }
 
 # ensure correct writing into configuration files

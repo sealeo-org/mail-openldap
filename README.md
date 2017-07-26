@@ -47,6 +47,7 @@ docker run -d --name mail \
 version: '3'
 services:
   mail:
+		container_name: mail
     image: sealeo/mail-openldap
     volumes:
     - /home/mail/mailboxes:/vmail
@@ -156,8 +157,8 @@ apt install -y incron
 #### Setup
 ```bash
 cat>/etc/incron.d/certs.mail.domain.com<<EOF
-/etc/letsencrypt/live/smtp.domain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/smtp.domain.com /data/containers/email/ssl/smtp.domain.com
-/etc/letsencrypt/live/imap.domain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/imap.domain.com /data/containers/email/ssl/imap.domain.com
+/etc/letsencrypt/live/smtp.domain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/smtp.domain.com /data/containers/email/ssl/smtp.domain.com && docker exec mail update_smtp_ssl
+/etc/letsencrypt/live/imap.domain.com/fullchain.pem IN_CLOSE_WRITE cp -LTrf /etc/letsencrypt/live/imap.domain.com /data/containers/email/ssl/imap.domain.com && docker exec mail update_imap_ssl
 EOF
 ```
 

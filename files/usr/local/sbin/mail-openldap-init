@@ -18,24 +18,13 @@ configLDAP() {
 		ldapadd $LDAP_OPTS -f $TMP
 	fi
 
-	CLEAR_DOVECOT_PASS=$(genPwd)
-	DOVECOT_PASS=$(slappasswd -s $CLEAR_DOVECOT_PASS -h {SSHA})
-
-	TMP=$(mktemp)
-	if ! ldapsearch $LDAP_OPTS -b $DC cn=dovecot | grep -q cn:; then
-		replaceValues>$TMP $CONFD/dovecot.ldif DC "$DC" LDAP_DOMAIN_BASE "$LDAP_DOMAIN_BASE" DOVECOT_PASS "$DOVECOT_PASS"
-		ldapadd $LDAP_OPTS -f $TMP
-	else
-		replaceValues>$TMP $CONFD/modify_dovecot.ldif DC "$DC" DOVECOT_PASS "$DOVECOT_PASS"
-		ldapmodify $LDAP_OPTS -f $TMP
-	fi
-
 	if ! ldapsearch $LDAP_OPTS -b dc=mail,$DC dc=$MAIL_DOMAIN | grep -q dc:; then 
 		TMP=$(mktemp)
 		O=$(echo $MAIL_DOMAIN | sed -r 's/(.*)\.(.*)/\1\2/')
 		replaceValues>$TMP $CONFD/mail_domain.ldif MAIL_DOMAIN "$MAIL_DOMAIN" DC "$DC" O "$O"
 		ldapadd $LDAP_OPTS -f $TMP
 	fi
+		
 }
 
 configPostfix() { 
@@ -45,9 +34,9 @@ configPostfix() {
 	TMP2=$(mktemp)
 	sed -r "s/^(smtpd?_tls_?.*)$/#\1/g" $TMP > /etc/postfix/main.cf
 
-	replaceValues>/etc/postfix/ldap-domains.cf $CONFD/ldap-domains.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
-	replaceValues>/etc/postfix/ldap-aliases.cf $CONFD/ldap-aliases.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
-	replaceValues>/etc/postfix/ldap-accounts.cf $CONFD/ldap-accounts.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
+	replaceValues>/etc/postfix/ldap-domains.cf $CONFD/ldap-domains.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_ADMIN_PASSWORD"
+	replaceValues>/etc/postfix/ldap-aliases.cf $CONFD/ldap-aliases.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_ADMIN_PASSWORD"
+	replaceValues>/etc/postfix/ldap-accounts.cf $CONFD/ldap-accounts.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_ADMIN_PASSWORD"
 }
 
 configAuth() {
@@ -55,7 +44,7 @@ configAuth() {
 	sed -r "s/^(START=)no$/\1yes/" /etc/default/saslauthd > $TMP
 	sed -r "s/^(MECHANISMS=\")pam(\")$/\1ldap\2/" $TMP > /etc/default/saslauthd
 
-	replaceValues>/etc/saslauthd.conf $CONFD/saslauthd.conf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_PASSWORD"
+	replaceValues>/etc/saslauthd.conf $CONFD/saslauthd.conf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_ADMIN_PASSWORD"
 	cp $CONFD/smtpd.conf /etc/postfix/smtpd.conf
 	cat>>/etc/postfix/main.cf $CONFD/append_main.cf
 
@@ -90,16 +79,16 @@ configIMAP() {
 
 	# Configure LDAP auth
 	setValue hosts ldap /etc/dovecot/dovecot-ldap.conf.ext
-	setValue dn "cn=dovecot,$DC" /etc/dovecot/dovecot-ldap.conf.ext
-	setValue dnpass "$CLEAR_DOVECOT_PASS" /etc/dovecot/dovecot-ldap.conf.ext
+	setValue dn "cn=admin,$DC" /etc/dovecot/dovecot-ldap.conf.ext
+	setValue dnpass "$LDAP_ADMIN_PASSWORD" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue debug_level -1 /etc/dovecot/dovecot-ldap.conf.ext
 	setValue auth_debug "yes" /etc/dovecot/conf.d/10-logging.conf
 	setValue auth_debug_passwords "yes" /etc/dovecot/conf.d/10-logging.conf
 	setValue ldap_version 3 /etc/dovecot/dovecot-ldap.conf.ext
 	setValue base "dc=mail,$DC" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue user_attrs "uidNumber=2000,gidNumber=2000" /etc/dovecot/dovecot-ldap.conf.ext
-	setValue user_filter "(&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
-	setValue pass_filter "(&(objectClass=CourierMailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
+	setValue user_filter "(&(objectClass=mailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
+	setValue pass_filter "(&(objectClass=mailAccount)(mail=%u))" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue default_pass_scheme SSHA /etc/dovecot/dovecot-ldap.conf.ext
 
 	sed -i '/inbox = yes/a \

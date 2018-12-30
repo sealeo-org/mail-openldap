@@ -3,8 +3,7 @@ cn:%USER@%DOMAIN
 sn:%USER
 mail:%USER@%DOMAIN
 mailbox: %DOMAIN/%USER/
-homeDirectory: /vmail/
 objectClass: top
 objectClass: inetOrgPerson
-objectClass: CourierMailAccount
+objectClass: mailAccount
 userPassword: %PASSWORD

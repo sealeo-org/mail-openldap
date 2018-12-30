@@ -6,4 +6,4 @@ sn: %NAME
 displayName: %NAME
 objectClass: top
 objectClass: inetOrgPerson
-objectClass: CourierMailAlias
+objectClass: mailAlias

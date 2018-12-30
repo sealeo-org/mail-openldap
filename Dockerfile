@@ -27,7 +27,7 @@ RUN groupadd -g 2000 vmail && useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m
 ENV TZ               Etc/UTC
 
 # LDAP
-ENV LDAP_PASSWORD    password
+ENV LDAP_ADMIN_PASSWORD    password
 ENV LDAP_DOMAIN_BASE example.com
 
 # Mail

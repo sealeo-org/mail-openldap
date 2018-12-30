@@ -3,7 +3,7 @@
 Main features:
 * use postfix, dovecot
 * manage multidomain emails
-* connects to an existing LDAP (see: [OpenLDAP](https://hub.docker.com/r/sealeo/openldap/))
+* connects to an existing LDAP (see: [OpenLDAP](https://hub.docker.com/r/osixia/openldap))
 
 Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openldap/) 
 
@@ -23,7 +23,7 @@ Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openl
 - TZ: the timezone
 - MAIL_DOMAIN: the domain of the mail server
 - LDAP_DOMAIN_BASE: the URL to access the LDAP
-- LDAP_PASSWORD: the password for LDAP
+- LDAP_ADMIN_PASSWORD: the password for LDAP
 - DKIM_KEY_SIZE: DKIM key size in bits
 
 ### Examples
@@ -37,7 +37,7 @@ docker run -d --name mail \
  -p 25:25 -p 587:587 -p 993:993 \
  --link ldap
  -e TZ=Etc/UTC -e MAIL_DOMAIN=domain.com \
- -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_PASSWORD=password \
+ -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_ADMIN_PASSWORD=password \
  -e DKIM_KEY_SIZE=2048 \
  sealeo/mail-openldap
 ```
@@ -47,13 +47,13 @@ docker run -d --name mail \
 version: '3'
 services:
   mail:
-		container_name: mail
+    container_name: mail
     image: sealeo/mail-openldap
     volumes:
     - /home/mail/mailboxes:/vmail
     - /home/mail/ssl/smtp.domain.com:/ssl/smtp.domain.com:ro
     - /home/mail/ssl/imap.domain.com:/ssl/imap.domain.com:ro
-		- /home/mail/dkim:/etc/opendkim
+    - /home/mail/dkim:/etc/opendkim
     ports:
     - "25:25"
     - 587:587
@@ -61,11 +61,11 @@ services:
     external_links:
     - ldap
     environment:
-		- TZ=Etc/UTC
-		- MAIL_DOMAIN=domain.com
+    - TZ=Etc/UTC
+    - MAIL_DOMAIN=domain.com
     - LDAP_DOMAIN_BASE=domain.com
-    - LDAP_PASSWORD=password
-		- DKIM_KEY_SIZE=2048
+    - LDAP_ADMIN_PASSWORD=password
+    - DKIM_KEY_SIZE=2048
 ```
 
 ## DNS

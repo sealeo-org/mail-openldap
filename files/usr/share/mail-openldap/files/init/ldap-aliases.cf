@@ -1,7 +1,7 @@
 server_host = ldap
 server_port = 389
 search_base = dc=mail,%DC
-query_filter = (&(objectClass=CourierMailAlias)(mail=%s))
+query_filter = (&(objectClass=mailAlias)(mail=%s))
 result_attribute = maildrop
 bind = yes
 bind_dn = %CN_ADMIN

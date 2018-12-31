@@ -24,6 +24,7 @@ Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openl
 - MAIL_DOMAIN: the domain of the mail server
 - LDAP_DOMAIN_BASE: the URL to access the LDAP
 - LDAP_ADMIN_PASSWORD: the password for LDAP
+- LDAP_USE_TLS : use TLS to connect to LDAP
 - DKIM_KEY_SIZE: DKIM key size in bits
 
 ### Examples
@@ -38,6 +39,7 @@ docker run -d --name mail \
  --link ldap
  -e TZ=Etc/UTC -e MAIL_DOMAIN=domain.com \
  -e LDAP_DOMAIN_BASE=ldapdomain.com -e LDAP_ADMIN_PASSWORD=password \
+ -e LDAP_USE_TLS=0
  -e DKIM_KEY_SIZE=2048 \
  sealeo/mail-openldap
 ```
@@ -65,6 +67,7 @@ services:
     - MAIL_DOMAIN=domain.com
     - LDAP_DOMAIN_BASE=domain.com
     - LDAP_ADMIN_PASSWORD=password
+    - LDAP_USE_TLS=0
     - DKIM_KEY_SIZE=2048
 ```
 
@@ -180,7 +183,6 @@ Note: your main domain DKIM key is automatically generated at container boot if 
 docker exec -it mail add_alias
 Domain? domain.com
 User? admins
-Name? Administrator list
 
 Recipient list? CTRL+D to finish
 alice@domain.com

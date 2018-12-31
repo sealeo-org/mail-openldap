@@ -1,9 +1,5 @@
 dn:mail=%USER@%DOMAIN,dc=mailAlias,dc=%DOMAIN,dc=mail,%DC
-cn:%USER@%DOMAIN
 mail:%USER@%DOMAIN
-%MAILDROP
-sn: %NAME
-displayName: %NAME
+%MAILALIAS
 objectClass: top
-objectClass: inetOrgPerson
 objectClass: mailAlias

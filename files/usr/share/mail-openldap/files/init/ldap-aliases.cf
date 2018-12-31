@@ -1,8 +1,9 @@
 server_host = ldap
 server_port = 389
+start_tls = no
 search_base = dc=mail,%DC
 query_filter = (&(objectClass=mailAlias)(mail=%s))
-result_attribute = maildrop
+result_attribute = mailalias
 bind = yes
 bind_dn = %CN_ADMIN
 bind_pw = %LDAP_PASSWORD

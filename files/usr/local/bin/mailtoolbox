@@ -44,15 +44,15 @@ add_domain() {
 add_alias() {
 	DOMAIN=${1:-$(askValue Domain)}
 	USER=${2:-$(askValue User)}
-	NAME=${3:-$(askValue Name)}
 	echo 'Recipient list? CTRL+D to finish'
 	while read DEST; do
-		USERS+="\nmaildrop:$DEST"
+		USERS+="\nmailalias:$DEST"
 	done
 
 	USER=$(echo $USER | tr 'A-Z' 'a-z')
-	USERS=$(echo "$USERS"|grep maildrop)
-	replaceValues>/tmp/alias.ldif $CONFD/alias.ldif USER "$USER" NAME "$NAME" DOMAIN "$DOMAIN" DC "$DC" MAILDROP "$USERS"
+	USERS=$(echo "$USERS"|grep mailalias)
+	replaceValues>/tmp/alias.txt $CONFD/alias.ldif USER "$USER" DOMAIN "$DOMAIN" DC "$DC" MAILALIAS "$USERS"
+	sed '/^$/d' /tmp/alias.txt > /tmp/alias.ldif
 	ldapadd $LDAP_OPTS -f /tmp/alias.ldif
 }
 
@@ -66,7 +66,7 @@ add_email() {
 	echo
 
 	USER=$(echo $USER | tr 'A-Z' 'a-z')
-	if [ $(ldapsearch -h ldap -b "ou=people,$DC" -D $CN_ADMIN -w $LDAP_PASSWORD -P 3 -LLL "(mail=$USER)" uid | wc -l) -eq 0 ]; then
+	if [ $(ldapsearch $LDAP_OPTS -b "ou=people,$DC" -P 3 -LLL "(mail=$USER)" uid | wc -l) -eq 0 ]; then
 		CPW=$(slappasswd -s $PASSWORD -h {SSHA})
 		replaceValues>/tmp/account.ldif $CONFD/account.ldif DC "$DC" USER "$USER" DOMAIN "$DOMAIN" PASSWORD "$CPW"
 		ldapadd $LDAP_OPTS -f /tmp/account.ldif

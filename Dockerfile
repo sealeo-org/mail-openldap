@@ -5,6 +5,7 @@ LABEL version="0.3"
 
 RUN apt-get update && \
   LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
+	ca-certificates \
 	dovecot-imapd \
 	dovecot-ldap \
 	ldap-utils \
@@ -29,6 +30,7 @@ ENV TZ               Etc/UTC
 # LDAP
 ENV LDAP_ADMIN_PASSWORD    password
 ENV LDAP_DOMAIN_BASE example.com
+ENV LDAP_USE_TLS 1
 
 # Mail
 ENV SSL_SMTP_CERT    smtp.cert

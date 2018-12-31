@@ -9,6 +9,8 @@ BASE_CONFD=/usr/share/mail-openldap/files
 DC="dc=$(echo $LDAP_DOMAIN_BASE|cut -d'.' -f1),dc=$(echo $LDAP_DOMAIN_BASE|cut -d'.' -f2)"
 CN_ADMIN="cn=admin,$DC"
 LDAP_OPTS="-x -h ldap -D $CN_ADMIN -w $LDAP_ADMIN_PASSWORD"
+[ "$LDAP_USE_TLS" = "1" ] && LDAP_OPTS="-ZZ -h ldap.$LDAP_DOMAIN_BASE -D $CN_ADMIN -w $LDAP_ADMIN_PASSWORD"
+
 
 setValue() {
   VAR=$(echo $2 | sed 's#\([]\#\%\@\*\$\/&[]\)#\\\1#g')

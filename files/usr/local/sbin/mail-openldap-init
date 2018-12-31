@@ -37,6 +37,9 @@ configPostfix() {
 	replaceValues>/etc/postfix/ldap-domains.cf $CONFD/ldap-domains.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_ADMIN_PASSWORD"
 	replaceValues>/etc/postfix/ldap-aliases.cf $CONFD/ldap-aliases.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_ADMIN_PASSWORD"
 	replaceValues>/etc/postfix/ldap-accounts.cf $CONFD/ldap-accounts.cf DC "$DC" CN_ADMIN "$CN_ADMIN" LDAP_PASSWORD "$LDAP_ADMIN_PASSWORD"
+	setValue start_tls "yes" /etc/postfix/ldap-accounts.cf
+	setValue start_tls "yes" /etc/postfix/ldap-aliases.cf
+	setValue start_tls "yes" /etc/postfix/ldap-domains.cf
 }
 
 configAuth() {
@@ -78,9 +81,10 @@ configIMAP() {
 	sed -i 's/^.*\(!include auth-ldap.*\)$/\1/' /etc/dovecot/conf.d/10-auth.conf
 
 	# Configure LDAP auth
-	setValue hosts ldap /etc/dovecot/dovecot-ldap.conf.ext
+	setValue hosts "ldap.$LDAP_DOMAIN_BASE" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue dn "cn=admin,$DC" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue dnpass "$LDAP_ADMIN_PASSWORD" /etc/dovecot/dovecot-ldap.conf.ext
+	setValue tls "yes" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue debug_level -1 /etc/dovecot/dovecot-ldap.conf.ext
 	setValue auth_debug "yes" /etc/dovecot/conf.d/10-logging.conf
 	setValue auth_debug_passwords "yes" /etc/dovecot/conf.d/10-logging.conf

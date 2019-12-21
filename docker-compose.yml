@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  mail:
+    container_name: mail
+    image: sealeo/mail-openldap
+    volumes:
+      - /home/mail/mailboxes:/vmail
+      - /home/mail/ssl/smtp.domain.com:/ssl/smtp.domain.com:ro
+      - /home/mail/ssl/imap.domain.com:/ssl/imap.domain.com:ro
+      - /home/mail/dkim:/etc/opendkim
+    ports:
+      - "25:25"
+      - 587:587
+      - 993:993
+    external_links:
+      - ldap
+    environment:
+      - TZ=Etc/UTC
+      - MAIL_DOMAIN=domain.com
+      - LDAP_DOMAIN_BASE=domain.com
+      - LDAP_ADMIN_PASSWORD=password
+      - LDAP_USE_TLS=0
+      - DKIM_KEY_SIZE=2048
+

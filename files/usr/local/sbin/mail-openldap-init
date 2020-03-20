@@ -12,25 +12,24 @@ configTZ() {
 }
 
 configLDAP() {
-	if ! ldapsearch $LDAP_OPTS -b $DC dc=mail | grep -q dc:; then 
+	if ! ldapsearch $LDAP_OPTS -b $DC dc=mail | grep -q dc:; then
 		TMP=$(mktemp)
 		replaceValues>$TMP $CONFD/mail.ldif DC "$DC"
 		ldapadd $LDAP_OPTS -f $TMP
 	fi
 
-	if ! ldapsearch $LDAP_OPTS -b dc=mail,$DC dc=$MAIL_DOMAIN | grep -q dc:; then 
+	if ! ldapsearch $LDAP_OPTS -b dc=mail,$DC dc=$MAIL_DOMAIN | grep -q dc:; then
 		TMP=$(mktemp)
 		O=$(echo $MAIL_DOMAIN | sed -r 's/(.*)\.(.*)/\1\2/')
 		replaceValues>$TMP $CONFD/mail_domain.ldif MAIL_DOMAIN "$MAIL_DOMAIN" DC "$DC" O "$O"
 		ldapadd $LDAP_OPTS -f $TMP
 	fi
-		
 }
 
-configPostfix() { 
+configPostfix() {
 	setValue myhostname $MAIL_DOMAIN /etc/postfix/main.cf
 	TMP=$(mktemp)
-	sed -r "s/^(smtpd_banner = ).*$/\1smtp.$MAIL_DOMAIN ESMTP Server ready/" /etc/postfix/main.cf > $TMP 
+	sed -r "s/^(smtpd_banner = ).*$/\1smtp.$MAIL_DOMAIN ESMTP Server ready/" /etc/postfix/main.cf > $TMP
 	TMP2=$(mktemp)
 	sed -r "s/^(smtpd?_tls_?.*)$/#\1/g" $TMP > /etc/postfix/main.cf
 
@@ -62,12 +61,12 @@ configAuth() {
 	adduser postfix sasl
 
 	uncomment '/submission/,/-o milter/' /etc/postfix/master.cf;
-	uncomment '/smtps/,/-o milter/' /etc/postfix/master.cf; 
+	uncomment '/smtps/,/-o milter/' /etc/postfix/master.cf;
 	comment "/mua_client/,/mua_sender/" /etc/postfix/master.cf;
 }
 
 configIMAP() {
-	sed -i 's/^.*\(disable_plaintext_auth = \).*$/\1no/' /etc/dovecot/conf.d/10-auth.conf 
+	sed -i 's/^.*\(disable_plaintext_auth = \).*$/\1no/' /etc/dovecot/conf.d/10-auth.conf
 	sed -i 's/^.*\(login_greeting = \).*$/\1Server ready/' /etc/dovecot/dovecot.conf
 	sed -i 's/^#\?\(mail_location = \).*$/\1maildir:\/vmail\/%d\/%n/' /etc/dovecot/conf.d/10-mail.conf
 	sed -i 's/^#\?\(mail_uid =\).*$/\1 2000/' /etc/dovecot/conf.d/10-mail.conf
@@ -85,9 +84,9 @@ configIMAP() {
 	setValue dn "cn=admin,$DC" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue dnpass "$LDAP_ADMIN_PASSWORD" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue tls "yes" /etc/dovecot/dovecot-ldap.conf.ext
-	setValue debug_level -1 /etc/dovecot/dovecot-ldap.conf.ext
+	setValue debug_level 0 /etc/dovecot/dovecot-ldap.conf.ext
 	setValue auth_debug "yes" /etc/dovecot/conf.d/10-logging.conf
-	setValue auth_debug_passwords "yes" /etc/dovecot/conf.d/10-logging.conf
+	setValue auth_debug_passwords "no" /etc/dovecot/conf.d/10-logging.conf
 	setValue ldap_version 3 /etc/dovecot/dovecot-ldap.conf.ext
 	setValue base "dc=mail,$DC" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue user_attrs "uidNumber=2000,gidNumber=2000" /etc/dovecot/dovecot-ldap.conf.ext
@@ -135,7 +134,7 @@ EOF
 	setValue ssl_key "</ssl/imap.${MAIL_DOMAIN}/privkey.pem" /etc/dovecot/conf.d/10-ssl.conf
 	setValue disable_plaintext_auth 'yes' /etc/dovecot/conf.d/10-auth.conf
 
-	sed -i "/unix_listener \/var\/spool\/postfix\/private\/auth/,/}/"' d' /etc/dovecot/conf.d/10-master.conf 
+	sed -i "/unix_listener \/var\/spool\/postfix\/private\/auth/,/}/"' d' /etc/dovecot/conf.d/10-master.conf
 	sed -i "/smtp-auth/aunix_listener /var/spool/postfix/private/auth {\n     mode = 0660\n    user = postfix\n    group = postfix\n}\n" /etc/dovecot/conf.d/10-master.conf
 }
 
@@ -172,5 +171,5 @@ fi
 
 /etc/init.d/saslauthd start
 /etc/init.d/postfix start
-/etc/init.d/dovecot start 
+/etc/init.d/dovecot start
 /etc/init.d/opendkim start

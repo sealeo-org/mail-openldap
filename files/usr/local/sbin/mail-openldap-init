@@ -85,7 +85,8 @@ configIMAP() {
 	setValue dnpass "$LDAP_ADMIN_PASSWORD" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue tls "yes" /etc/dovecot/dovecot-ldap.conf.ext
 	setValue debug_level 0 /etc/dovecot/dovecot-ldap.conf.ext
-	setValue auth_debug "yes" /etc/dovecot/conf.d/10-logging.conf
+	setValue auth_verbose "yes" /etc/dovecot/conf.d/10-logging.conf
+	setValue auth_debug "no" /etc/dovecot/conf.d/10-logging.conf
 	setValue auth_debug_passwords "no" /etc/dovecot/conf.d/10-logging.conf
 	setValue ldap_version 3 /etc/dovecot/dovecot-ldap.conf.ext
 	setValue base "dc=mail,$DC" /etc/dovecot/dovecot-ldap.conf.ext

@@ -13,28 +13,28 @@ LDAP_OPTS="-x -h ldap -D $CN_ADMIN -w $LDAP_ADMIN_PASSWORD"
 
 
 setValue() {
-  VAR=$(echo $2 | sed 's#\([]\#\%\@\*\$\/&[]\)#\\\1#g')
-  sed -i "s/^#\?\($1[[:space:]]*=\).*$/\1$VAR/" $3
+	VAR=$(echo $2 | sed 's#\([]\#\%\@\*\$\/&[]\)#\\\1#g')
+	sed -i "s/^#\?\($1[[:space:]]*=\).*$/\1$VAR/" $3
 }
 
 uncomment() { sed -i "$1"' s/^ *#//' "$2"; }
 comment()   { sed -i "$1"' s/^/#/' "$2"; }
 
 genPwd() {
-  date +%s | sha256sum | base64 | head -c 32 ; echo 
+	date +%s | sha256sum | base64 | head -c 32 ; echo
 }
 
-replaceValues() { 
+replaceValues() {
 	delim=$'\001'
-  filename=$1
-  shift
-  ans=$(cat $filename) 
- 
-  while [ $# -gt 1 ]; do
+	filename=$1
+	shift
+	ans=$(cat $filename)
+
+	while [ $# -gt 1 ]; do
 		from="%$1"
 		to=$(echo $2|sed 's/&/\\\&/g')
-    shift 2
-    ans=$(echo "$ans"|sed "s${delim}$from${delim}$to${delim}g")
-  done                                                                                                    
-  echo "$ans"
-} 
+		shift 2
+		ans=$(echo "$ans"|sed "s${delim}$from${delim}$to${delim}g")
+	done
+	echo "$ans"
+}

@@ -4,7 +4,7 @@ LABEL maintainer="Pierre GUINAULT <speed@infinity.ovh>, Alexis Pereda <alexis@pe
 LABEL version="0.3"
 
 RUN apt-get update && \
-  LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
+	LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	ca-certificates \
 	dovecot-imapd \
 	dovecot-ldap \

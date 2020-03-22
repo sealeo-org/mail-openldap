@@ -174,3 +174,5 @@ fi
 /etc/init.d/postfix start
 /etc/init.d/dovecot start
 /etc/init.d/opendkim start
+
+tail -f /var/log/mail.log

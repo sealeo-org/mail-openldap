@@ -12,7 +12,7 @@ virtual_minimum_uid = 100
 virtual_gid_maps = static:2000
 virtual_uid_maps = static:2000
 # Link between alias address and email address
-virtual_alias_maps = ldap:/etc/postfix/ldap-aliases.cf
+virtual_alias_maps = ldap:/etc/postfix/ldap-aliases.cf, hash:/etc/postfix/catchall.cf
 
 # SASL Support
 smtpd_sasl_local_domain =

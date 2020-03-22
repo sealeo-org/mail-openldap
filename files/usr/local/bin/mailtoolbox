@@ -74,12 +74,15 @@ add_email() {
 }
 
 update_catchall() {
+	cffile=/etc/postfix/catchall.cf
+
 	if [ ! -r /config/catchall ]; then
 		echo>&2 "[error] missing or non readable /config/catchall"
+		:>"${cffile}"
+		postmap "${cffile}"
 		return
 	fi
 
-	cffile=/etc/postfix/catchall.cf
 	:>"${cffile}"
 	addresses="$(ldapsearch $LDAP_OPTS -b dc=mail,$DC|grep 'mail:'|cut -d' ' -f2)"
 	while read line; do

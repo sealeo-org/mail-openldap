@@ -5,7 +5,7 @@ Main features:
 * manage multidomain emails
 * connects to an existing LDAP (see: [OpenLDAP](https://hub.docker.com/r/osixia/openldap))
 
-Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openldap/) 
+Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openldap/)
 
 # Installation
 ## Docker
@@ -14,6 +14,7 @@ Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openl
 - /vmail: all mailboxes
 - /ssl/...: the SSL certificates for SMTP and IMAP (see SSL section)
 - /etc/opendkim: storage for opendkim keys
+- /config: configuration files (see Configuration section)
 
 ### Ports
 - 25 and 587 are for SMTP
@@ -128,6 +129,19 @@ You must ensure that these certificates are up to date.
 
 Examples below are with Let's Encrypt but they must be easy to adapt to anything.
 Note: this configuration is to be done on the **host**
+
+## Configuration
+
+### Catchall
+
+`/config/catchall` can contain one e-mail address per domain to enable a catchall for this domain.
+Example:
+```bash
+catchall@example.com
+receiver@foobar.fr
+```
+
+existing e-mail addresses will still be sent only to that specific recipient.
 
 ### First installation
 if you have any service listening on port 80: (example: nginx)

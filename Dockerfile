@@ -50,5 +50,6 @@ EXPOSE 993
 
 VOLUME ["/vmail"]
 VOLUME ["/ssl"]
+VOLUME ["/config"]
 
 CMD ["/usr/bin/supervisord", "-c/etc/supervisord.conf"]

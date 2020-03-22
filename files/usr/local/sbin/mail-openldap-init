@@ -149,6 +149,8 @@ configDKIM() {
 	[ ! -e $DKIMDIR/keys/$MAIL_DOMAIN ] && gen_dkim $MAIL_DOMAIN ||:
 }
 
+################################################################################
+
 # ensure correct writing into configuration files
 /etc/init.d/opendkim stop; pkill opendkim||:
 /etc/init.d/dovecot stop
@@ -169,6 +171,8 @@ if [ ! -e /usr/share/mail-openldap/docker_configured ]; then
 else
 	status "found already-configured docker"
 fi
+
+/usr/local/bin/update_catchall without_reloading_postfix
 
 /etc/init.d/saslauthd start
 /etc/init.d/postfix start

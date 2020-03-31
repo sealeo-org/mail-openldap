@@ -98,7 +98,7 @@ update_catchall() {
 
 	postmap "${cffile}"
 
-	[ -z "$1" ] && /etc/init.d/postfix reload
+	[ -z "$1" ] && /etc/init.d/postfix reload ||:
 }
 
 eval $(basename $0) $@

@@ -1,7 +1,7 @@
 FROM debian:8.8
 
 LABEL maintainer="Pierre GUINAULT <speed@infinity.ovh>, Alexis Pereda <alexis@pereda.fr>"
-LABEL version="0.4"
+LABEL version="0.4.1"
 
 RUN apt-get update && \
 	LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -49,5 +49,7 @@ EXPOSE 993
 VOLUME ["/vmail"]
 VOLUME ["/ssl"]
 VOLUME ["/config"]
+
+HEALTHCHECK CMD /usr/local/sbin/healthcheck
 
 CMD ["/usr/local/sbin/mail-openldap-init"]

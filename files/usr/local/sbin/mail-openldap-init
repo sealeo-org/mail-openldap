@@ -152,6 +152,7 @@ configDKIM() {
 
 # ensure correct writing into configuration files
 status "boot $(date)"
+:>/var/run/mail-openldap.starting
 /etc/init.d/opendkim stop; pkill opendkim||:
 /etc/init.d/dovecot stop
 postfix stop # avoid an issue with postfix start
@@ -182,4 +183,5 @@ status "start services"
 /etc/init.d/opendkim start
 
 status "boot terminated, now displaying mail.log"
+rm /var/run/mail-openldap.starting
 tail -f /var/log/mail.log

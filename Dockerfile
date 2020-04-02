@@ -1,7 +1,7 @@
 FROM debian:8.8
 
 LABEL maintainer="Pierre GUINAULT <speed@infinity.ovh>, Alexis Pereda <alexis@pereda.fr>"
-LABEL version="0.3"
+LABEL version="0.4"
 
 RUN apt-get update && \
 	LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -17,9 +17,7 @@ RUN apt-get update && \
 	opendkim-tools \
 	postfix \
 	postfix-ldap \
-	rsyslog \
 	sasl2-bin \
-	supervisor \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g 2000 vmail && useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m vmail
@@ -52,4 +50,4 @@ VOLUME ["/vmail"]
 VOLUME ["/ssl"]
 VOLUME ["/config"]
 
-CMD ["/usr/bin/supervisord", "-c/etc/supervisord.conf"]
+CMD ["/usr/local/sbin/mail-openldap-init"]

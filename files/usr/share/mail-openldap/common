@@ -1,7 +1,7 @@
 #!/bin/bash
 
 status() {
-	echo>&2 "---> ${@}"
+	echo>&2 "[mail-openldap] ${@}"
 }
 
 BASE_CONFD=/usr/share/mail-openldap/files

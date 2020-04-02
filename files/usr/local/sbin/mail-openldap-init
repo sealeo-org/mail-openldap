@@ -2,7 +2,6 @@
 
 source /usr/share/mail-openldap/common
 
-set -eux
 LC_CTYPE=C.UTF-8
 CONFD=$BASE_CONFD/init
 
@@ -152,6 +151,7 @@ configDKIM() {
 ################################################################################
 
 # ensure correct writing into configuration files
+status "boot $(date)"
 /etc/init.d/opendkim stop; pkill opendkim||:
 /etc/init.d/dovecot stop
 postfix stop # avoid an issue with postfix start
@@ -172,11 +172,14 @@ else
 	status "found already-configured docker"
 fi
 
+status "update catchall"
 /usr/local/bin/update_catchall without_reloading_postfix
 
+status "start services"
 /etc/init.d/saslauthd start
 /etc/init.d/postfix start
 /etc/init.d/dovecot start
 /etc/init.d/opendkim start
 
+status "boot terminated, now displaying mail.log"
 tail -f /var/log/mail.log

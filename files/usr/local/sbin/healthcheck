@@ -1,14 +1,26 @@
 #!/bin/bash
 
+source /usr/share/mail-openldap/common
+
+exitvalue=0
+
+unhealthy() {
+	echo "$*"
+	exitvalue=1
+}
+
 if [ -f "/var/run/mail-openldap.starting" ]; then
-	exit 0
+	exit "${exitvalue}"
 fi
 
 procs=$(ps ax)
 
-echo "${procs}"|grep -q dovecot || exit 1
-echo "${procs}"|grep -q postfix || exit 1
-echo "${procs}"|grep -q opendkim || exit 1
-echo "${procs}"|grep -q saslauthd || exit 1
+echo "${procs}"|grep -q dovecot || unhealthy 'dovecot is not running'
+echo "${procs}"|grep -q postfix || unhealthy 'postfix is not running'
+echo "${procs}"|grep -q opendkim || unhealthy 'opendkim is not running'
+echo "${procs}"|grep -q saslauthd || unhealthy 'saslauthd is not running'
 
-exit 0
+me=$(ldapwhoami ${LDAP_OPTS})
+[ "${me}" != "dn:${CN_ADMIN}" ] && unhealthy "LDAP issue: ${me}"
+
+exit "${exitvalue}"

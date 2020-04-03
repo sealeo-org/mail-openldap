@@ -4,6 +4,7 @@ Main features:
 * use postfix, dovecot
 * manage multidomain emails
 * connects to an existing LDAP (see: [OpenLDAP](https://hub.docker.com/r/osixia/openldap))
+* allow one catchall per domain
 
 Mail: postfix, dovecot - [Docker Hub](https://hub.docker.com/r/sealeo/mail-openldap/)
 
@@ -47,7 +48,7 @@ docker run -d --name mail \
 
 #### docker-compose.yml
 ```yaml
-version: '3'
+version: '2'
 services:
   mail:
     container_name: mail
@@ -81,15 +82,15 @@ imap 300 IN A x.x.x.x
 mail 10800 IN A x.x.x.x
 @ 10800 IN MX 10 mail.domain.com.
 ```
-x.x.x.x is the IP address of your mail server.
+Where x.x.x.x is the IP address of your mail server.
 
 ### Configurations for other domains
 ```
 @ 10800 IN MX 10 mail.domain.com.
 autoconfig IN CNAME autoconfig.domain.com
 ```
-where *domain.com* is the **main** domain.
-the *autoconfig* line is for Thunderbird (see section below)
+Where *domain.com* is the **main** domain.
+The *autoconfig* line is for Thunderbird (see section below).
 
 You will also need to configure each new domain for SPF, DKIM, ... (see below)
 
@@ -102,7 +103,7 @@ Example of possible configuration:
 ```
 domain.com. IN TXT "v=spf1 mx a ptr ip4:x.x.x.x ~all"
 ```
-x.x.x.x is the IP address of your mail server.
+Where x.x.x.x is the IP address of your mail server.
 
 #### DKIM
 See: [DKIM on Wikipedia](https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail)
@@ -120,7 +121,7 @@ _dmarc IN TXT "v=DMARC1; p=none"
 ```
 autoconfig IN A x.x.x.x
 ```
-and you must have a running webserver on *autoconfig.domain.com* which serves the content of `https://github.com/sealeo-org/mail-openldap/tree/master/etc/autoconfig.domain.com` (you must adapt the `mail/config-v1.1.xml` content to match your configuration)
+and you must have a running webserver on *autoconfig.domain.com* which serves the content of `https://github.com/sealeo-org/mail-openldap/tree/master/etc/autoconfig.domain.com` (you must adapt the `mail/config-v1.1.xml` content to match your configuration).
 
 ## SSL
 You need to provide SSL certificates for SMTPS and IMAPS in `/ssl`, in directories `smtp.domain.com` and `imap.domain.com` respectively.
@@ -128,7 +129,7 @@ Minimal files are `fullchain.pem` and `privkey.pem`. Any other file will be igno
 You must ensure that these certificates are up to date.
 
 Examples below are with Let's Encrypt but they must be easy to adapt to anything.
-Note: this configuration is to be done on the **host**
+Note: this configuration is to be done on the **host**.
 
 ## Configuration
 
@@ -180,7 +181,7 @@ EOF
 ```
 
 # Usage
-Scripts are available in the container to add a new domain, email address or alias
+Scripts are available in the container to add a new domain, email address or alias.
 
 ## Add domain
 ```bash
@@ -216,4 +217,4 @@ Password?
 docker exec -it mail gen_dkim
 Domain? domain.com
 ```
-See **Add domain**
+See **Add domain**.

@@ -173,10 +173,15 @@ else
 	status "found already-configured docker"
 fi
 
+status "setup permissions"
+chown -R opendkim:root /etc/opendkim/keys/**/*.private
+chown -R vmail:vmail /vmail
+
 status "update catchall"
 /usr/local/bin/update_catchall without_reloading_postfix
 
 status "start services"
+/etc/init.d/rsyslog start
 /etc/init.d/saslauthd start
 /etc/init.d/postfix start
 /etc/init.d/dovecot start

@@ -1,7 +1,7 @@
 FROM debian:8.8
 
 LABEL maintainer="Pierre GUINAULT <speed@infinity.ovh>, Alexis Pereda <alexis@pereda.fr>"
-LABEL version="0.4.1"
+LABEL version="0.4.2"
 
 RUN apt-get update && \
 	LC_ALL=C DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -18,6 +18,7 @@ RUN apt-get update && \
 	postfix \
 	postfix-ldap \
 	sasl2-bin \
+	rsyslog \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -g 2000 vmail && useradd -u 2000 -g 2000 -d /vmail -s /bin/false -m vmail
